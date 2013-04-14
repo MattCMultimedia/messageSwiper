@@ -52,18 +52,19 @@ static BOOL isFirstLaunch = YES;
 @interface MSSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 -(void)messageSwiper_handleSwipeLeft:(UISwipeGestureRecognizer *)recognizer;
 -(void)messageSwiper_handleSwipeRight:(UISwipeGestureRecognizer *)recognizer;
+-(void)messageSwiper_handlePan:(UIPanGestureRecognizer *)recognizer;
 @end
 @implementation MSSwipeDelegate
 -(void)messageSwiper_handleSwipeLeft:(UISwipeGestureRecognizer *)recognizer
     {
         //increment
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Left"
-            message:[NSString stringWithFormat:@"%@", recognizer]
-            delegate:nil
-            cancelButtonTitle:@"K"
-            otherButtonTitles:nil];
-        [alert show];
-        [alert release];
+        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Left"
+        //     message:[NSString stringWithFormat:@"%@", recognizer]
+        //     delegate:nil
+        //     cancelButtonTitle:@"K"
+        //     otherButtonTitles:nil];
+        // [alert show];
+        // [alert release];
 
         unsigned int nextConvoIndex = currentConvoIndex + 1;
         if (nextConvoIndex >= [convos count]) {
@@ -79,13 +80,13 @@ static BOOL isFirstLaunch = YES;
     {
         //decrement
         //CGPoint translation = [recognizer translationInView:recognizer.view];
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"right"
-            message:[NSString stringWithFormat:@"%@", recognizer]
-            delegate:nil
-            cancelButtonTitle:@"K"
-            otherButtonTitles:nil];
-        [alert show];
-        [alert release];
+        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"right"
+        //     message:[NSString stringWithFormat:@"%@", recognizer]
+        //     delegate:nil
+        //     cancelButtonTitle:@"K"
+        //     otherButtonTitles:nil];
+        // [alert show];
+        // [alert release];
 
         unsigned int nextConvoIndex = 0;
         if (currentConvoIndex == 0) {
@@ -98,7 +99,17 @@ static BOOL isFirstLaunch = YES;
 
 
     }
+-(void)messageSwiper_handlePan:(UIPanGestureRecognizer *)recognizer
+{
+    if (recognizer.state == UIGestureRecognizerStateEnded) {
+        CGPoint translation = [recognizer translationInView:backPlacard];
+        if (translation.x >= 200) {
+            [ckMessagesController showConversationList:YES];
+        }
 
+    }
+
+}
 
 //delegate methods
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
@@ -143,6 +154,11 @@ static MSSwipeDelegate *swipeDelegate;
             swipeRightRecognizer.delegate = swipeDelegate;
             swipeRightRecognizer.numberOfTouchesRequired = 1;
             [backPlacard addGestureRecognizer:swipeRightRecognizer];
+
+            //testing pan gesture recognizer
+            UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handlePan:)];
+            panRecognizer.maximumNumberOfTouches = 1;
+            [backPlacard addGestureRecognizer:panRecognizer];
         }
     }
 
