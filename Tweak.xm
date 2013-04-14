@@ -50,13 +50,21 @@ static UIView *backPlacard;
 static BOOL isFirstLaunch = YES;
 
 @interface MSSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
--(void)messageSwiper_handleSwipeLeft;
--(void)messageSwiper_handleSwipeRight;
+-(void)messageSwiper_handleSwipeLeft:(UISwipeGestureRecognizer *)recognizer;
+-(void)messageSwiper_handleSwipeRight:(UISwipeGestureRecognizer *)recognizer;
 @end
 @implementation MSSwipeDelegate
--(void)messageSwiper_handleSwipeLeft
+-(void)messageSwiper_handleSwipeLeft:(UISwipeGestureRecognizer *)recognizer
     {
         //increment
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Left"
+            message:[NSString stringWithFormat:@"%@", recognizer]
+            delegate:nil
+            cancelButtonTitle:@"K"
+            otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+
         unsigned int nextConvoIndex = currentConvoIndex + 1;
         if (nextConvoIndex >= [convos count]) {
             nextConvoIndex = 0;
@@ -67,9 +75,18 @@ static BOOL isFirstLaunch = YES;
 
     }
 
--(void)messageSwiper_handleSwipeRight
+-(void)messageSwiper_handleSwipeRight:(UISwipeGestureRecognizer *)recognizer
     {
         //decrement
+        //CGPoint translation = [recognizer translationInView:recognizer.view];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"right"
+            message:[NSString stringWithFormat:@"%@", recognizer]
+            delegate:nil
+            cancelButtonTitle:@"K"
+            otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+
         unsigned int nextConvoIndex = 0;
         if (currentConvoIndex == 0) {
             nextConvoIndex = [convos count] - 1 ;
@@ -115,13 +132,13 @@ static MSSwipeDelegate *swipeDelegate;
             // [backPlacard addSubview:overlay];
 
             //add gesture recognizer here
-            UISwipeGestureRecognizer *swipeLeftRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeLeft)];
+            UISwipeGestureRecognizer *swipeLeftRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeLeft:)];
             swipeLeftRecognizer.direction = UISwipeGestureRecognizerDirectionLeft;
             swipeLeftRecognizer.delegate = swipeDelegate;
             swipeLeftRecognizer.numberOfTouchesRequired = 1;
             [backPlacard addGestureRecognizer:swipeLeftRecognizer];
 
-            UISwipeGestureRecognizer *swipeRightRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeRight)];
+            UISwipeGestureRecognizer *swipeRightRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeRight:)];
             swipeRightRecognizer.direction = (UISwipeGestureRecognizerDirectionRight);
             swipeRightRecognizer.delegate = swipeDelegate;
             swipeRightRecognizer.numberOfTouchesRequired = 1;
@@ -142,6 +159,17 @@ static MSSwipeDelegate *swipeDelegate;
     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
     return %orig;
 }
+// -(void)dealloc
+// {
+//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"dealloc"
+//         message:[NSString stringWithFormat:@"%@", @"Test"]
+//         delegate:nil
+//         cancelButtonTitle:@"K"
+//         otherButtonTitles:nil];
+//     [alert show];
+//     [alert release];
+//     %orig;
+// }
 
 %end
 
