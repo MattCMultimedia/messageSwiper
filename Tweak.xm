@@ -1,46 +1,12 @@
-/* How to Hook with Logos
-Hooks are written with syntax similar to that of an Objective-C @implementation.
-You don't need to #include <substrate.h>, it will be done automatically, as will
-the generation of a class list and an automatic constructor.
 
-%hook ClassName
 
-// Hooking a class method
-+ (id)sharedInstance {
-	return %orig;
-}
-
-// Hooking an instance method with an argument.
-- (void)messageName:(int)argument {
-	%log; // Write a message about this call, including its class, name and arguments, to the system log.
-
-	%orig; // Call through to the original function with its original arguments.
-	%orig(nil); // Call through to the original function with a custom argument.
-
-	// If you use %orig(), you MUST supply all arguments (except for self and _cmd, the automatically generated ones.)
-}
-
-// Hooking an instance method with no arguments.
-- (id)noArguments {
-	%log;
-	id awesome = %orig;
-	[awesome doSomethingElse];
-
-	return awesome;
-}
-
-// Always make sure you clean up after yourself; Not doing so could have grave consequences!
-%end
-*/
-
-#import <ChatKit/CKConversation.h>
+// #import <ChatKit/CKConversation.h>
 #import <ChatKit/CKTranscriptController.h>
 #import <ChatKit/CKConversationList.h>
 #import <MobileSMS/CKMessagesController.h>
 #import <UIKit/UIGestureRecognizer.h>
 #import <UIKit/UIKit.h>
 #import <MobileSMS/SMSApplication.h>
-// #import <UIKit/UIGestureRecognizerDelegate.h>
 
 //static NSString *test;
 static NSMutableArray *convos = [[NSMutableArray alloc] init];
@@ -58,13 +24,6 @@ static BOOL isFirstLaunch = YES;
 -(void)messageSwiper_handleSwipeLeft:(UISwipeGestureRecognizer *)recognizer
     {
         //increment
-        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Left"
-        //     message:[NSString stringWithFormat:@"%@", recognizer]
-        //     delegate:nil
-        //     cancelButtonTitle:@"K"
-        //     otherButtonTitles:nil];
-        // [alert show];
-        // [alert release];
 
         unsigned int nextConvoIndex = currentConvoIndex + 1;
         if (nextConvoIndex >= [convos count]) {
@@ -79,15 +38,6 @@ static BOOL isFirstLaunch = YES;
 -(void)messageSwiper_handleSwipeRight:(UISwipeGestureRecognizer *)recognizer
     {
         //decrement
-        //CGPoint translation = [recognizer translationInView:recognizer.view];
-        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"right"
-        //     message:[NSString stringWithFormat:@"%@", recognizer]
-        //     delegate:nil
-        //     cancelButtonTitle:@"K"
-        //     otherButtonTitles:nil];
-        // [alert show];
-        // [alert release];
-
         unsigned int nextConvoIndex = 0;
         if (currentConvoIndex == 0) {
             nextConvoIndex = [convos count] - 1 ;
@@ -138,9 +88,6 @@ static MSSwipeDelegate *swipeDelegate;
             isFirstLaunch = NO;
             swipeDelegate = [[MSSwipeDelegate alloc] init];
             backPlacard.userInteractionEnabled = YES;
-            // UIView *overlay = [[UIView alloc] initWithFrame:[backPlacard frame]];
-            // [overlay setBackgroundColor:[UIColor redColor]];
-            // [backPlacard addSubview:overlay];
 
             //add gesture recognizer here
             UISwipeGestureRecognizer *swipeLeftRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeLeft:)];
@@ -155,7 +102,7 @@ static MSSwipeDelegate *swipeDelegate;
             swipeRightRecognizer.numberOfTouchesRequired = 1;
             [backPlacard addGestureRecognizer:swipeRightRecognizer];
 
-            //testing pan gesture recognizer
+            //testing pan gesture recognizer - works pretty well
             UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handlePan:)];
             panRecognizer.maximumNumberOfTouches = 1;
             [backPlacard addGestureRecognizer:panRecognizer];
@@ -186,19 +133,6 @@ static MSSwipeDelegate *swipeDelegate;
 //     [alert release];
 //     %orig;
 // }
-
-%end
-
-%hook CKConversation
-
-- (id)init
-{
-    //log all new conversations - works on init - TODO: test on the fly
-    //[convos addObject:self];
-
-    return %orig;
-}
-
 
 %end
 
