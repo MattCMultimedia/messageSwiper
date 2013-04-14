@@ -1,12 +1,9 @@
 
-
-// #import <ChatKit/CKConversation.h>
 #import <ChatKit/CKTranscriptController.h>
 #import <ChatKit/CKConversationList.h>
 #import <MobileSMS/CKMessagesController.h>
 #import <UIKit/UIGestureRecognizer.h>
 #import <UIKit/UIKit.h>
-#import <MobileSMS/SMSApplication.h>
 
 //static NSString *test;
 static NSMutableArray *convos = [[NSMutableArray alloc] init];
@@ -82,11 +79,13 @@ static MSSwipeDelegate *swipeDelegate;
 
 - (void)viewDidAppear:(BOOL)arg1
 {
+    //only run this part once or otherwise we'll have multiple gesturerecognizers and shit
     if (isFirstLaunch) {
         backPlacard = self.view;
         if (backPlacard) {
             isFirstLaunch = NO;
             swipeDelegate = [[MSSwipeDelegate alloc] init];
+            //just in case it isn't default
             backPlacard.userInteractionEnabled = YES;
 
             //add gesture recognizer here
@@ -114,28 +113,6 @@ static MSSwipeDelegate *swipeDelegate;
 }
 %end
 
-
-%hook SMSApplication
-
--(BOOL)application:(id)application didFinishLaunchingWithOptions:(id)options
-{
-    convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
-    return %orig;
-}
-// -(void)dealloc
-// {
-//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"dealloc"
-//         message:[NSString stringWithFormat:@"%@", @"Test"]
-//         delegate:nil
-//         cancelButtonTitle:@"K"
-//         otherButtonTitles:nil];
-//     [alert show];
-//     [alert release];
-//     %orig;
-// }
-
-%end
-
 //
 %hook CKMessagesController
 -(void)_conversationLeft:(id)left
@@ -149,15 +126,6 @@ static MSSwipeDelegate *swipeDelegate;
 {
     //resets currentConvoIndex
     currentConvoIndex = [convos indexOfObject:conversation];
-    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"index"
-    //     message:[NSString stringWithFormat:@"%@ \n\n\n %@", [[%c(CKConversationList) sharedConversationList] activeConversations], convos]
-    //     delegate:nil
-    //     cancelButtonTitle:@"K"
-    //     otherButtonTitles:nil];
-    // [alert show];
-    // [alert release];
-
-
     %orig;
 }
 -(void)showConversation:(id)conversation animate:(BOOL)animate forceToTranscript:(BOOL)transcript
@@ -172,9 +140,10 @@ static MSSwipeDelegate *swipeDelegate;
     currentConvoIndex = [convos indexOfObject:conversation];
     return %orig;
 }
-//grabs the ckMessagesController object - could probably be replaces with %c(CKMessagesController)
+//grabs the ckMessagesController object
 -(id)init
 {
+    convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
     ckMessagesController = self;
     return %orig;
 }
