@@ -1,0 +1,10 @@
+Package: MattCMultimedia
+Name: messageSwiper
+Depends: mobilesubstrate
+Version: 0.0.1-136
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: Matt
+Author: Matt
+Section: Tweaks
+Installed-Size: 20
