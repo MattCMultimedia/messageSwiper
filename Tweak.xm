@@ -13,13 +13,56 @@ static UIView *backPlacard;
 static BOOL isFirstLaunch = YES;
 static BOOL customSwipeSettings = NO;
 // static BOOL globalEnable = YES;
-// static BOOL enableLongSwipes = YES;
+
 static BOOL switchShortSwipeDirections = NO;
 static BOOL longSwipesEnabled = YES;
+static BOOL wrapAroundEnabled = YES;
 
 //values
 static int longSwipeDistance = 200;
 static int shortSwipeDistance = 50;
+
+//animation UIView interfaces and stuff
+@interface MSNextMessagePreviewView : UIView
+
+@property (assign) UIImage *contactImage;
+@property (assign) NSString *contactName;
+@property (assign) NSString *mostRecentMessage;
+
+- (void) initWithConversation:(CKConversation *)convo;
+
+@end
+@implementation MSNextMessagePreviewView
+@synthesize contactImage = _contactImage;
+@synthesize contactName = _contactName;
+@synthesize mostRecentMessage = _mostRecentMessage;
+
+- (void) initWithConversation:(CKConversation *)convo
+{
+    self.contactName = [convo name];
+}
+
+- (void)baseInit {
+    _contactName = NULL;
+    _contactName = @"Unknown";
+    _mostRecentMessage = @"This is my most recent message, yay!";
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self baseInit];
+    }
+    return self;
+}
+
+@end
+
+
+
+
+
 
 @interface MSSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 
@@ -68,10 +111,14 @@ static int shortSwipeDistance = 50;
             if (translation.x >= 50) {
                 //this is short swipe: show next convo
                 unsigned int nextConvoIndex = 0;
+                nextConvoIndex = currentConvoIndex - 1;
                 if (currentConvoIndex == 0) {
-                    nextConvoIndex = [convos count] - 1 ;
-                } else {
-                    nextConvoIndex = currentConvoIndex - 1;
+                    if (wrapAroundEnabled) {
+                        nextConvoIndex = [convos count] - 1 ;
+                    } else {
+                        nextConvoIndex = 0;
+                        //maybe show bounce animation here
+                    }
                 }
 
                 [ckMessagesController showConversation:[convos objectAtIndex:nextConvoIndex] animate:YES];
@@ -79,7 +126,7 @@ static int shortSwipeDistance = 50;
 
         } else {
             //ended swipe on left side
-            //ong swipe stuff left
+            //long swipe stuff left
             translation.x = -1 * translation.x;
             if (customSwipeSettings) {
                 //whatever the value from that thing is
@@ -101,7 +148,13 @@ static int shortSwipeDistance = 50;
                 //this is short swipe: show next convo
                 unsigned int nextConvoIndex = currentConvoIndex + 1;
                 if (nextConvoIndex >= [convos count]) {
-                    nextConvoIndex = 0;
+                    if (wrapAroundEnabled) {
+                        nextConvoIndex = 0;
+                    } else {
+                        nextConvoIndex = currentConvoIndex;
+                        //maybe display bounce animation here
+                    }
+
                 }
 
                 [ckMessagesController showConversation:[convos objectAtIndex:nextConvoIndex] animate:YES];
@@ -190,6 +243,10 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)showConversation:(id)conversation animate:(BOOL)animate forceToTranscript:(BOOL)transcript
 {
     //resets currentConvoIndex
+
+    MSNextMessagePreviewView *testView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(50,50,50,50)];
+    [testView setBackgroundColor:[UIColor redColor]];
+    [backPlacard addSubview:testView];
     currentConvoIndex = [convos indexOfObject:conversation];
     %orig;
 }
