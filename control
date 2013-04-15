@@ -1,9 +1,0 @@
-Package: MattCMultimedia
-Name: messageSwiper
-Depends: mobilesubstrate
-Version: 1.0
-Architecture: iphoneos-arm
-Description: MessageSwiper allows users to quickly switch between message threads in Message.app using left and right swipe gestures.
-Maintainer: Matt
-Author: Matt
-Section: Tweaks
