@@ -107,23 +107,17 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
 @implementation MSSwipeDelegate
 
 -(void)createPreviewImages {
-    NSString *previewImagePathBundle = [NSHomeDirectory() stringByAppendingPathComponent:@"/Library/Application Support/MessageSwiper/"];
-    NSString *finalPreviewImagePath = [NSString stringWithFormat:@"%@/previewImage%@.png", previewImagePathBundle, getsuffix()];//, previewImagePathBundle ]]; //getsuffix()]];
-    previewImage = [UIImage imageWithContentsOfFile:finalPreviewImagePath];
+    NSBundle *bundle = [[NSBundle alloc] initWithPath:@"var/mobile/Library/Application Support/MessageSwiper/"];
+    NSString *imagePath = [bundle pathForResource:[NSString stringWithFormat:@"/previewImage%@", getsuffix()] ofType:@"png"];
+    previewImage = [UIImage imageWithContentsOfFile:imagePath];
     UIImageOrientation flippedOrientation = UIImageOrientationUpMirrored;
     flippedPreviewImage = [UIImage imageWithCGImage:previewImage.CGImage scale:previewImage.scale orientation:flippedOrientation];
-    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Test"
-    //     message:[NSString stringWithFormat:@"%@", flippedPreviewImage]
-    //     delegate:nil
-    //     cancelButtonTitle:@"K"
-    //     otherButtonTitles:nil];
-    // [alert show];
-    // [alert release];
+
     leftPreviewView.image = previewImage;
     rightPreviewView.image = flippedPreviewImage;
 
-    // [previewImagePathBundle release];
-    // [finalPreviewImagePath release];
+    [bundle release];
+    [imagePath release];
 }
 
 -(void)messageSwiper_handlePan:(UIPanGestureRecognizer *)recognizer
@@ -459,6 +453,7 @@ static MSSwipeDelegate *swipeDelegate;
 
 -(id)init
 {
+
     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
     ckMessagesController = self;
     return %orig;
@@ -494,6 +489,7 @@ static MSSwipeDelegate *swipeDelegate;
     [preferences release];
     // if(something) %init(HelloWorld); //This makes the hello world group functional based on an if statement, just for code management.
     //make a group for WhatsApp and only init if WhatsApp is running or something
+    //after making this,
     //also possibly make group for iOS5 to stop crashes
     //determine if the app is WhatsApp
     //NSString *bundleIdentifier = [NSBundle mainBundle].bundleIdentifier;
