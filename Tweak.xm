@@ -26,12 +26,32 @@ static int longSwipeDistance = 200;
 static int shortSwipeDistance = 50;
 
 
-static UILabel *rightContactNameLabel;
+
 static UILabel *leftContactNameLabel;
+static UILabel *rightContactNameLabel;
+static UILabel *leftMostRecentMessageLabel;
+static UILabel *rightMostRecentMessageLabel;
+static UIImage *previewImage;
+static UIImage *flippedPreviewImage;
+
+static CGPoint originalLocation;
+
+
+
+
+static NSString *getsuffix() {
+
+    if ([[UIScreen mainScreen] scale] < 2.0f)
+        return @"";
+
+    return @"@2x";
+
+}
+
 
 
 //animation UIView interfaces and stuff
-@interface MSNextMessagePreviewView : UIView
+@interface MSNextMessagePreviewView : UIImageView
 
 @property (assign) UIImage *contactImage;
 @property (assign) NSString *contactName;
@@ -48,12 +68,13 @@ static UILabel *leftContactNameLabel;
 - (void) setConversation:(CKConversation *)convo
 {
     self.contactName = [convo name];
+    //would set mostRecentMessage here
 }
 
 - (void)baseInit {
     _contactName = NULL;
     _contactName = @"Unknown";
-    _mostRecentMessage = @"This is my most recent message, yay!";
+    _mostRecentMessage = @"This is my most recent message, yay! It's got a lot of text cause I don't know how to not talk lollololo";
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -67,8 +88,8 @@ static UILabel *leftContactNameLabel;
 
 @end
 
-static MSNextMessagePreviewView *leftPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(0,50,200,75)];
-static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(100,50,200,75)];
+static MSNextMessagePreviewView *leftPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
+static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(320,10,120,160)];
 
 
 
@@ -76,16 +97,49 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
 @interface MSSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 
 -(void)messageSwiper_handlePan:(UIPanGestureRecognizer *)recognizer;
+-(void)createPreviewImages;
 @end
 @implementation MSSwipeDelegate
 
+-(void)createPreviewImages {
+    NSString *previewImagePathBundle = [NSHomeDirectory() stringByAppendingPathComponent:@"/Library/Application Support/MessageSwiper/"];
+    NSString *finalPreviewImagePath = [NSString stringWithFormat:@"%@/previewImage%@.png", previewImagePathBundle, getsuffix()];//, previewImagePathBundle ]]; //getsuffix()]];
+    previewImage = [UIImage imageWithContentsOfFile:finalPreviewImagePath];
+    UIImageOrientation flippedOrientation = UIImageOrientationUpMirrored;
+    flippedPreviewImage = [UIImage imageWithCGImage:previewImage.CGImage scale:previewImage.scale orientation:flippedOrientation];
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Test"
+    //     message:[NSString stringWithFormat:@"%@", flippedPreviewImage]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+    leftPreviewView.image = previewImage;
+    rightPreviewView.image = flippedPreviewImage;
+
+    // [previewImagePathBundle release];
+    // [finalPreviewImagePath release];
+}
+
 -(void)messageSwiper_handlePan:(UIPanGestureRecognizer *)recognizer
 {
+
+    if (recognizer.state == UIGestureRecognizerStateBegan) {
+        //if new touch
+        originalLocation = [recognizer locationInView:backPlacard];
+
+    }
     //if convos are empty and stuff, just don't do anything
-    if (convos == NULL) {
+    if ((convos == NULL) || ([convos count] == 0)) {
         return;
     }
-    CGPoint translation = [recognizer translationInView:backPlacard];
+    CGPoint tempLoc = [recognizer locationInView:backPlacard];
+    CGPoint translation;//[recognizer translationInView:backPlacard];
+    if (tempLoc.x >= originalLocation.x) {
+        translation = CGPointMake(tempLoc.x - originalLocation.x, originalLocation.y);
+    } else {
+        translation = CGPointMake(-1* (originalLocation.x - tempLoc.x), originalLocation.y);
+    }
     unsigned int nextConvoIndex;
 
     //positive == right
@@ -95,6 +149,8 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
     }
     if (translation.x > 0) {
         //is an ongoing swipe to the right
+        //rightPreviewView.center = CGPointMake(320, leftPreviewView.center.y);
+        rightPreviewView.hidden = YES;
 
         nextConvoIndex = currentConvoIndex - 1;
         if (currentConvoIndex == 0) {
@@ -108,27 +164,55 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
         if (enableAnimations) {
             //show animations here
 
-
             if (![leftPreviewView isDescendantOfView:backPlacard]) {
-
-                [leftPreviewView setBackgroundColor:[UIColor redColor]];
+                //if not added to view, go ahead and grab the image and add it to the view
+                if (previewImage == NULL) {
+                    [self createPreviewImages];
+                }
                 [backPlacard addSubview:leftPreviewView];
 
-                leftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 75)];
-
+                leftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(8, 15, 75, 50)];
                 [leftContactNameLabel setTextColor:[UIColor blackColor]];
                 [leftContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [leftContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [leftContactNameLabel setNumberOfLines:4];
                 [leftPreviewView addSubview:leftContactNameLabel];
+
+                //add message label here
+                leftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(8,69,75, 80)];
+                [leftMostRecentMessageLabel setTextColor:[UIColor blackColor]];
+                [leftMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
+                [leftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [leftMostRecentMessageLabel setNumberOfLines:10];
+                [leftPreviewView addSubview:leftMostRecentMessageLabel];
             }
             [leftPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
             leftContactNameLabel.text = leftPreviewView.contactName;
+            leftMostRecentMessageLabel.text = leftPreviewView.mostRecentMessage;
+            //update message label here
             [backPlacard bringSubviewToFront:leftPreviewView];
             leftPreviewView.hidden = NO;
+
+            //actual animations
+            // CGPoint velocity = [recognizer velocityInView:backPlacard];
+            // CGFloat magnitude = sqrtf((velocity.x * velocity.x) + (velocity.y * velocity.y));
+            // CGFloat slideMult = magnitude / 200;
+
+            //float slideFactor = 0.1 * slideMult; // Increase for more of a slide
+            CGPoint finalPoint = CGPointMake(leftPreviewView.center.x + translation.x,
+                                             leftPreviewView.center.y);
+            finalPoint.x = MIN(finalPoint.x, shortSwipeDistance + 8);
+            //finalPoint.y = MIN(MAX(finalPoint.y, 0), backPlacard.bounds.size.height);
+
+            [UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+                leftPreviewView.center = finalPoint;
+            } completion:nil];
         }
 
     } else {
         //is an ongoing swipe left
+        leftPreviewView.hidden = YES;
+        leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
         nextConvoIndex = currentConvoIndex + 1;
         if (nextConvoIndex >= [convos count]) {
             if (wrapAroundEnabled) {
@@ -141,33 +225,56 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
         if (enableAnimations) {
             //show animations here
 
-
+            //previewImage.imageOrientation = UIImageOrientationUpMirrored;
             if (![rightPreviewView isDescendantOfView:backPlacard]) {
+                if (flippedPreviewImage == NULL) {
+                    [self createPreviewImages];
+                }
 
-                [rightPreviewView setBackgroundColor:[UIColor redColor]];
                 [backPlacard addSubview:rightPreviewView];
 
-                rightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 75)];
-
+                rightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(38, 15, 75, 50)];
                 [rightContactNameLabel setTextColor:[UIColor blackColor]];
                 [rightContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [rightContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [rightContactNameLabel setNumberOfLines:4];
                 [rightPreviewView addSubview:rightContactNameLabel];
+
+                rightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(38,69,75, 80)];
+                [rightMostRecentMessageLabel setTextColor:[UIColor blackColor]];
+                [rightMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
+                [rightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [rightMostRecentMessageLabel setNumberOfLines:10];
+                [rightPreviewView addSubview:rightMostRecentMessageLabel];
             }
             [rightPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
             rightContactNameLabel.text = rightPreviewView.contactName;
+            rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
             [backPlacard bringSubviewToFront:rightPreviewView];
             rightPreviewView.hidden = NO;
+
+            //actually animate ImageView here
 
         }
 
     }
+    //LIFTS FINGER
 
     //once user lifts finger, do whatever should happen within swipe range
     if (recognizer.state == UIGestureRecognizerStateEnded) {
         //remove the UIView when this gets called
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"translation"
+            message:[NSString stringWithFormat:@"%@", NSStringFromCGPoint(translation)]
+            delegate:nil
+            cancelButtonTitle:@"K"
+            otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+
         leftPreviewView.hidden = YES;
         rightPreviewView.hidden = YES;
+        leftPreviewView.center = CGPointMake(-120-(leftPreviewView.center.x/2), leftPreviewView.center.y);
+        // rightPreviewView.center = CGPointMake(320, leftPreviewView.center.y);
 
 
 
@@ -262,25 +369,12 @@ static MSSwipeDelegate *swipeDelegate;
             //just in case it isn't default
             backPlacard.userInteractionEnabled = YES;
 
-            //add gesture recognizer here
-            // UISwipeGestureRecognizer *swipeLeftRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeLeft:)];
-            // swipeLeftRecognizer.direction = UISwipeGestureRecognizerDirectionLeft;
-            // swipeLeftRecognizer.delegate = swipeDelegate;
-            // swipeLeftRecognizer.numberOfTouchesRequired = 1;
-            // [backPlacard addGestureRecognizer:swipeLeftRecognizer];
-
-            // UISwipeGestureRecognizer *swipeRightRecognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handleSwipeRight:)];
-            // swipeRightRecognizer.direction = (UISwipeGestureRecognizerDirectionRight);
-            // swipeRightRecognizer.delegate = swipeDelegate;
-            // swipeRightRecognizer.numberOfTouchesRequired = 1;
-            // [backPlacard addGestureRecognizer:swipeRightRecognizer];
-
             //testing pan gesture recognizer - works pretty well
             UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:swipeDelegate action:@selector(messageSwiper_handlePan:)];
             panRecognizer.maximumNumberOfTouches = 1;
             [backPlacard addGestureRecognizer:panRecognizer];
 
-            //possible add another panRecognizer to allow for two finger longSwipes
+            //possibly add another panRecognizer to allow for two finger longSwipes
         }
     }
 
@@ -301,6 +395,14 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)showConversation:(id)conversation animate:(BOOL)animate
 {
     //resets currentConvoIndex
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"flippedPreviewImage"
+    //     message:[NSString stringWithFormat:@"%@", flippedPreviewImage]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+
     currentConvoIndex = [convos indexOfObject:conversation];
     %orig;
 }
