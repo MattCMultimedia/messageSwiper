@@ -1,3 +1,5 @@
+.theos
+obj
 media
 .DS_Store
 *.deb
