@@ -89,7 +89,7 @@ static NSString *getsuffix() {
 @end
 
 static MSNextMessagePreviewView *leftPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
-static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(320,10,120,160)];
+static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(380,10,120,160)];
 
 
 
@@ -149,7 +149,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
     }
     if (translation.x > 0) {
         //is an ongoing swipe to the right
-        //rightPreviewView.center = CGPointMake(320, leftPreviewView.center.y);
+        rightPreviewView.center = CGPointMake(380, leftPreviewView.center.y);
         rightPreviewView.hidden = YES;
 
         nextConvoIndex = currentConvoIndex - 1;
@@ -195,10 +195,16 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
 
             //actual animations
 
+            int scalar;
+            if (shortSwipeDistance > 120) {
+                scalar = 1;
+            } else {
+                scalar = (120/shortSwipeDistance);
+            }
             //float slideFactor = 0.1 * slideMult; // Increase for more of a slide
-            CGPoint finalPoint = CGPointMake(-60 + (translation.x * (120/shortSwipeDistance)),
+            CGPoint finalPoint = CGPointMake(-60 + (translation.x * scalar),
                                              leftPreviewView.center.y);
-            finalPoint.x = MIN(finalPoint.x, shortSwipeDistance + 8);
+            finalPoint.x = MIN(finalPoint.x, 60);
             //finalPoint.y = MIN(MAX(finalPoint.y, 0), backPlacard.bounds.size.height);
             if (translation.x > shortSwipeDistance+8) {
                 leftPreviewView.alpha = 1.0f;
@@ -255,7 +261,22 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
             rightPreviewView.hidden = NO;
 
             //actually animate ImageView here
+            int scalar;
+            if (shortSwipeDistance > 120) {
+                scalar = 1;
+            } else {
+                scalar = (120/shortSwipeDistance);
+            }
+            CGPoint finalPoint = CGPointMake(380 + (translation.x * scalar), leftPreviewView.center.y);
+            finalPoint.x = MAX(finalPoint.x, 320 - 60);
+            //finalPoint.y = MIN(MAX(finalPoint.y, 0), backPlacard.bounds.size.height);
+            if (-1*translation.x > (shortSwipeDistance+8)) {
+                rightPreviewView.alpha = 1.0f;
+            } else {
+                rightPreviewView.alpha = 0.75f;
+            }
 
+            rightPreviewView.center = finalPoint;
         }
 
     }
@@ -264,18 +285,18 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
     //once user lifts finger, do whatever should happen within swipe range
     if (recognizer.state == UIGestureRecognizerStateEnded) {
         //remove the UIView when this gets called
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"translation"
-            message:[NSString stringWithFormat:@"%@", NSStringFromCGPoint(translation)]
-            delegate:nil
-            cancelButtonTitle:@"K"
-            otherButtonTitles:nil];
-        [alert show];
-        [alert release];
+        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"translation"
+        //     message:[NSString stringWithFormat:@"%@", NSStringFromCGPoint(translation)]
+        //     delegate:nil
+        //     cancelButtonTitle:@"K"
+        //     otherButtonTitles:nil];
+        // [alert show];
+        // [alert release];
 
         leftPreviewView.hidden = YES;
         rightPreviewView.hidden = YES;
-        leftPreviewView.center = CGPointMake(-120-(leftPreviewView.center.x/2), leftPreviewView.center.y);
-        // rightPreviewView.center = CGPointMake(320, leftPreviewView.center.y);
+        leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
+        rightPreviewView.center = CGPointMake(380, rightPreviewView.center.y);
 
 
 
@@ -288,7 +309,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 longSwipeDistance = 200;
                 shortSwipeDistance = 50;
             }
-            if ((translation.x >= 200) && longSwipesEnabled) {
+            if ((translation.x >= longSwipeDistance) && longSwipesEnabled) {
                 //if long swipe right, show list
                 if (switchShortSwipeDirections) {
                     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
@@ -299,7 +320,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 return;
             }
 
-            if (translation.x >= 50) {
+            if (translation.x >= shortSwipeDistance) {
                 //this is short swipe: show next convo
                 [ckMessagesController showConversation:[convos objectAtIndex:nextConvoIndex] animate:YES];
                 return;
@@ -316,7 +337,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 shortSwipeDistance = 50;
             }
 
-            if ((translation.x >= 200) && longSwipesEnabled) {
+            if ((translation.x >= longSwipeDistance) && longSwipesEnabled) {
                 if (switchShortSwipeDirections) {
                     [ckMessagesController showConversationList:YES];
                 } else {
@@ -326,7 +347,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 return;
             }
             //short swipe stuff left
-            if (translation.x >= 50) {
+            if (translation.x >= shortSwipeDistance) {
                 //this is short swipe: show next convo
 
                 [ckMessagesController showConversation:[convos objectAtIndex:nextConvoIndex] animate:YES];
@@ -410,6 +431,15 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)showConversation:(id)conversation animate:(BOOL)animate forceToTranscript:(BOOL)transcript
 {
     //resets currentConvoIndex
+    // int test = 380 + (translation.x * (120/shortSwipeDistance))
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"shortSwipeDistance"
+    //     message:[NSString stringWithFormat:@"shortSwipeDistance: %d", shortSwipeDistance]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+
     currentConvoIndex = [convos indexOfObject:conversation];
     %orig;
 }
