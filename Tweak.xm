@@ -78,8 +78,8 @@ static NSString *getsuffix() {
 
 - (void)baseInit {
     _contactName = NULL;
-    _contactName = @"Unknown";
-    _mostRecentMessage = @"This is my most recent message, yay! It's got a lot of text cause I don't know how to not talk lollololo";
+    _contactName = @"Unknown - Error";
+    _mostRecentMessage = @"Error Retrieving Message.";
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -176,7 +176,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 }
                 [backPlacard addSubview:leftPreviewView];
 
-                leftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(8, 15, 75, 50)];
+                leftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(9, 15, 75, 50)];
                 [leftContactNameLabel setTextColor:[UIColor blackColor]];
                 [leftContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [leftContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
@@ -185,7 +185,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 [leftPreviewView addSubview:leftContactNameLabel];
 
                 //add message label here
-                leftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(8,69,75, 80)];
+                leftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(9,69,75, 79)];
                 [leftMostRecentMessageLabel setTextColor:[UIColor blackColor]];
                 [leftMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
                 [leftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
@@ -251,7 +251,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
 
                 [backPlacard addSubview:rightPreviewView];
 
-                rightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(38, 15, 75, 50)];
+                rightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(39, 15, 75, 50)];
                 [rightContactNameLabel setTextColor:[UIColor blackColor]];
                 [rightContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [rightContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
@@ -259,7 +259,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 [rightContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
                 [rightPreviewView addSubview:rightContactNameLabel];
 
-                rightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(38,69,75, 80)];
+                rightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(39,69,75, 79)];
                 [rightMostRecentMessageLabel setTextColor:[UIColor blackColor]];
                 [rightMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
                 [rightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
