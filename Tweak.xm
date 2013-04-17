@@ -194,19 +194,20 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
             leftPreviewView.hidden = NO;
 
             //actual animations
-            // CGPoint velocity = [recognizer velocityInView:backPlacard];
-            // CGFloat magnitude = sqrtf((velocity.x * velocity.x) + (velocity.y * velocity.y));
-            // CGFloat slideMult = magnitude / 200;
 
             //float slideFactor = 0.1 * slideMult; // Increase for more of a slide
-            CGPoint finalPoint = CGPointMake(leftPreviewView.center.x + translation.x,
+            CGPoint finalPoint = CGPointMake(-60 + (translation.x * (120/shortSwipeDistance)),
                                              leftPreviewView.center.y);
             finalPoint.x = MIN(finalPoint.x, shortSwipeDistance + 8);
             //finalPoint.y = MIN(MAX(finalPoint.y, 0), backPlacard.bounds.size.height);
+            if (translation.x > shortSwipeDistance+8) {
+                leftPreviewView.alpha = 1.0f;
+            } else {
+                leftPreviewView.alpha = 0.75f;
+            }
 
-            [UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-                leftPreviewView.center = finalPoint;
-            } completion:nil];
+            leftPreviewView.center = finalPoint;
+
         }
 
     } else {
