@@ -1,6 +1,7 @@
 
 #import <ChatKit/CKTranscriptController.h>
 #import <ChatKit/CKConversationList.h>
+#import <ChatKit/CKConversation.h>
 #import <MobileSMS/CKMessagesController.h>
 #import <UIKit/UIGestureRecognizer.h>
 #import <UIKit/UIKit.h>
@@ -18,8 +19,9 @@ static BOOL customSwipeSettings = NO;
 
 static BOOL switchShortSwipeDirections = NO;
 static BOOL longSwipesEnabled = YES;
-static BOOL wrapAroundEnabled = YES;
+static BOOL wrapAroundEnabled = NO;
 static BOOL enableAnimations = YES;
+static BOOL hideBackButton = NO;
 
 //values
 static int longSwipeDistance = 200;
@@ -69,6 +71,9 @@ static NSString *getsuffix() {
 {
     self.contactName = [convo name];
     //would set mostRecentMessage here
+    self.mostRecentMessage = [[convo latestMessage] previewText]; //returns CKIMMessage => NSString
+
+
 }
 
 - (void)baseInit {
@@ -89,7 +94,7 @@ static NSString *getsuffix() {
 @end
 
 static MSNextMessagePreviewView *leftPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
-static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(380,10,120,160)];
+static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView alloc] initWithFrame:CGRectMake(backPlacard.frame.size.width+60,10,120,160)];
 
 
 
@@ -149,7 +154,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
     }
     if (translation.x > 0) {
         //is an ongoing swipe to the right
-        rightPreviewView.center = CGPointMake(380, leftPreviewView.center.y);
+        rightPreviewView.center = CGPointMake(backPlacard.frame.size.width+60, leftPreviewView.center.y);
         rightPreviewView.hidden = YES;
 
         nextConvoIndex = currentConvoIndex - 1;
@@ -176,14 +181,16 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 [leftContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [leftContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
                 [leftContactNameLabel setNumberOfLines:4];
+                [leftContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
                 [leftPreviewView addSubview:leftContactNameLabel];
 
                 //add message label here
                 leftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(8,69,75, 80)];
                 [leftMostRecentMessageLabel setTextColor:[UIColor blackColor]];
                 [leftMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
-                [leftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [leftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
                 [leftMostRecentMessageLabel setNumberOfLines:10];
+                [leftMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
                 [leftPreviewView addSubview:leftMostRecentMessageLabel];
             }
             [leftPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
@@ -192,6 +199,10 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
             //update message label here
             [backPlacard bringSubviewToFront:leftPreviewView];
             leftPreviewView.hidden = NO;
+            if ((translation.x > longSwipeDistance) && longSwipesEnabled) {
+                leftContactNameLabel.text = @"Convo List";
+                leftMostRecentMessageLabel.text = @"Release to Return to List.";
+            }
 
             //actual animations
 
@@ -245,20 +256,30 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 [rightContactNameLabel setBackgroundColor:[UIColor clearColor]];
                 [rightContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
                 [rightContactNameLabel setNumberOfLines:4];
+                [rightContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
                 [rightPreviewView addSubview:rightContactNameLabel];
 
                 rightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(38,69,75, 80)];
                 [rightMostRecentMessageLabel setTextColor:[UIColor blackColor]];
                 [rightMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
-                [rightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [rightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
                 [rightMostRecentMessageLabel setNumberOfLines:10];
+                [rightMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
                 [rightPreviewView addSubview:rightMostRecentMessageLabel];
             }
+
             [rightPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
             rightContactNameLabel.text = rightPreviewView.contactName;
             rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
             [backPlacard bringSubviewToFront:rightPreviewView];
             rightPreviewView.hidden = NO;
+
+            if ((-1*translation.x > longSwipeDistance) && longSwipesEnabled) {
+                //set to first convo
+                [rightPreviewView setConversation:[convos objectAtIndex:0]];
+                rightContactNameLabel.text = rightPreviewView.contactName;
+                rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
+            }
 
             //actually animate ImageView here
             int scalar;
@@ -267,8 +288,8 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
             } else {
                 scalar = (120/shortSwipeDistance);
             }
-            CGPoint finalPoint = CGPointMake(380 + (translation.x * scalar), leftPreviewView.center.y);
-            finalPoint.x = MAX(finalPoint.x, 320 - 60);
+            CGPoint finalPoint = CGPointMake(backPlacard.frame.size.width+60 + (translation.x * scalar), leftPreviewView.center.y);
+            finalPoint.x = MAX(finalPoint.x, backPlacard.frame.size.width - 60);
             //finalPoint.y = MIN(MAX(finalPoint.y, 0), backPlacard.bounds.size.height);
             if (-1*translation.x > (shortSwipeDistance+8)) {
                 rightPreviewView.alpha = 1.0f;
@@ -285,18 +306,12 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
     //once user lifts finger, do whatever should happen within swipe range
     if (recognizer.state == UIGestureRecognizerStateEnded) {
         //remove the UIView when this gets called
-        // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"translation"
-        //     message:[NSString stringWithFormat:@"%@", NSStringFromCGPoint(translation)]
-        //     delegate:nil
-        //     cancelButtonTitle:@"K"
-        //     otherButtonTitles:nil];
-        // [alert show];
-        // [alert release];
+
 
         leftPreviewView.hidden = YES;
         rightPreviewView.hidden = YES;
         leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
-        rightPreviewView.center = CGPointMake(380, rightPreviewView.center.y);
+        rightPreviewView.center = CGPointMake(backPlacard.frame.size.width+60, rightPreviewView.center.y);
 
 
 
@@ -400,6 +415,11 @@ static MSSwipeDelegate *swipeDelegate;
         }
     }
 
+    if (longSwipesEnabled && hideBackButton) {
+        [[self navigationItem] setHidesBackButton:YES];
+    }
+
+
     %orig;
 
 }
@@ -417,28 +437,14 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)showConversation:(id)conversation animate:(BOOL)animate
 {
     //resets currentConvoIndex
-    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"flippedPreviewImage"
-    //     message:[NSString stringWithFormat:@"%@", flippedPreviewImage]
-    //     delegate:nil
-    //     cancelButtonTitle:@"K"
-    //     otherButtonTitles:nil];
-    // [alert show];
-    // [alert release];
 
     currentConvoIndex = [convos indexOfObject:conversation];
     %orig;
 }
 -(void)showConversation:(id)conversation animate:(BOOL)animate forceToTranscript:(BOOL)transcript
 {
-    //resets currentConvoIndex
-    // int test = 380 + (translation.x * (120/shortSwipeDistance))
-    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"shortSwipeDistance"
-    //     message:[NSString stringWithFormat:@"shortSwipeDistance: %d", shortSwipeDistance]
-    //     delegate:nil
-    //     cancelButtonTitle:@"K"
-    //     otherButtonTitles:nil];
-    // [alert show];
-    // [alert release];
+
+
 
     currentConvoIndex = [convos indexOfObject:conversation];
     %orig;
@@ -457,6 +463,7 @@ static MSSwipeDelegate *swipeDelegate;
     ckMessagesController = self;
     return %orig;
 }
+
 
 %end
 
@@ -479,6 +486,7 @@ static MSSwipeDelegate *swipeDelegate;
             enableAnimations = [[preferences objectForKey:@"enableAnimations"] boolValue];
             longSwipeDistance = [[preferences objectForKey:@"longSwipeDistance"] intValue];
             shortSwipeDistance = [[preferences objectForKey:@"shortSwipeDistance"] intValue];
+            hideBackButton = [[preferences objectForKey:@"hideBackButton"] boolValue];
         }
     }
 

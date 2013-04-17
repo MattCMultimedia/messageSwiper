@@ -1,7 +1,7 @@
 Package: MattCMultimedia
 Name: messageSwiper
 Depends: mobilesubstrate, firmware (>= 6.0)
-Version: 2.0.1-225
+Version: 2.0.1-247
 Architecture: iphoneos-arm
 Description: MessageSwiper allows users to quickly switch between message threads in Messaging apps using swipe gestures.
 Maintainer: MattCMultimedia
