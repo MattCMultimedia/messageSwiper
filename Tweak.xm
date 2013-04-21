@@ -470,20 +470,20 @@ static MSSwipeDelegate *swipeDelegate;
     NSString *prefPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Preferences/com.mattcmultimedia.messageswiper.plist"];
     NSDictionary *preferences = [[NSDictionary alloc] initWithContentsOfFile:prefPath];
     BOOL globalEnable = [[preferences objectForKey:@"globalEnable"] boolValue];
+    customSwipeSettings = [[preferences objectForKey:@"customSwipeSettings"] boolValue];
+    if (customSwipeSettings) {
+        //now grab the rest of the values
+        switchShortSwipeDirections = [[preferences objectForKey:@"switchShortSwipeDirections"] boolValue];
+        wrapAroundEnabled = [[preferences objectForKey:@"wrapAroundEnabled"] boolValue];
+        longSwipesEnabled = [[preferences objectForKey:@"longSwipesEnabled"] boolValue];
+        enableAnimations = [[preferences objectForKey:@"enableAnimations"] boolValue];
+        longSwipeDistance = [[preferences objectForKey:@"longSwipeDistance"] intValue];
+        shortSwipeDistance = [[preferences objectForKey:@"shortSwipeDistance"] intValue];
+        hideBackButton = [[preferences objectForKey:@"hideBackButton"] boolValue];
+    }
     if (globalEnable) {
         %init;
         //passed globalInit; now record rest of preferences
-        customSwipeSettings = [[preferences objectForKey:@"customSwipeSettings"] boolValue];
-        if (customSwipeSettings) {
-            //now grab the rest of the values
-            switchShortSwipeDirections = [[preferences objectForKey:@"switchShortSwipeDirections"] boolValue];
-            wrapAroundEnabled = [[preferences objectForKey:@"wrapAroundEnabled"] boolValue];
-            longSwipesEnabled = [[preferences objectForKey:@"longSwipesEnabled"] boolValue];
-            enableAnimations = [[preferences objectForKey:@"enableAnimations"] boolValue];
-            longSwipeDistance = [[preferences objectForKey:@"longSwipeDistance"] intValue];
-            shortSwipeDistance = [[preferences objectForKey:@"shortSwipeDistance"] intValue];
-            hideBackButton = [[preferences objectForKey:@"hideBackButton"] boolValue];
-        }
     }
 
     [prefPath release];
