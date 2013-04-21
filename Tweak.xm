@@ -76,6 +76,7 @@ static NSString *getsuffix() {
 
 }
 
+
 - (void)baseInit {
     _contactName = NULL;
     _contactName = @"Unknown - Error";
@@ -107,7 +108,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
 @implementation MSSwipeDelegate
 
 -(void)createPreviewImages {
-    NSBundle *bundle = [[NSBundle alloc] initWithPath:@"var/mobile/Library/Application Support/MessageSwiper/"];
+    NSBundle *bundle = [[NSBundle alloc] initWithPath:@"/Library/Application Support/MessageSwiper/"];
     NSString *imagePath = [bundle pathForResource:[NSString stringWithFormat:@"/previewImage%@", getsuffix()] ofType:@"png"];
     previewImage = [UIImage imageWithContentsOfFile:imagePath];
     UIImageOrientation flippedOrientation = UIImageOrientationUpMirrored;
