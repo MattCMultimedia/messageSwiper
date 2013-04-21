@@ -34,9 +34,24 @@ static UILabel *leftMostRecentMessageLabel;
 static UILabel *rightMostRecentMessageLabel;
 static UIImage *previewImage;
 static UIImage *flippedPreviewImage;
+static NSDictionary *preferences = nil;
 
 static CGPoint originalLocation;
 
+#define PrefPath [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Preferences/com.mattcmultimedia.messageswiper.plist"]
+
+// static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+//     [preferences release];
+//     preferences = [[NSDictionary alloc] initWithContentsOfFile:PrefPath];
+//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"pref changed"
+//         message:[NSString stringWithFormat:@"%@", @"Test"]
+//         delegate:nil
+//         cancelButtonTitle:@"K"
+//         otherButtonTitles:nil];
+//     [alert show];
+//     [alert release];
+
+// }
 
 static NSString *getsuffix() {
 
@@ -123,7 +138,10 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
         originalLocation = [recognizer locationInView:backPlacard];
 
     }
-    //if convos are empty and stuff, just don't do anything
+    //if convos are empty and stuff, just don't do anything, also if global enable off
+    if (!globalEnable) {
+        return;
+    }
     if ((convos == NULL) || ([convos count] == 0)) {
         return;
     }
@@ -312,6 +330,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
             if ((translation.x >= longSwipeDistance) && longSwipesEnabled) {
                 //if long swipe right, show list
                 if (switchShortSwipeDirections) {
+                    //but if switched, show newest message
                     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
                     [ckMessagesController showConversation:[convos objectAtIndex:0] animate:YES];
                 } else {
@@ -396,13 +415,69 @@ static MSSwipeDelegate *swipeDelegate;
         }
     }
 
-    if (longSwipesEnabled && hideBackButton) {
+    if (longSwipesEnabled && hideBackButton && globalEnable) {
         [[self navigationItem] setHidesBackButton:YES];
     }
 
     //convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
+    //update settings
+    // NSDictionary *preferences = [[NSDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.mattcmultimedia.messageswiper.plist"];
+
+    // if (!preferences) { globalEnable = YES; }
+    // id tempglobalEnable = [preferences valueForKey:@"globalEnable"];
+    // if (tempglobalEnable) { globalEnable = [tempglobalEnable boolValue]; }
+    // id tempcustomSwipeSettings = [preferences valueForKey:@"customSwipeSettings"];
+    // if (tempcustomSwipeSettings) { customSwipeSettings = [tempcustomSwipeSettings boolValue]; }
+    // if (customSwipeSettings) {
+    //     //now grab the rest of the values
+    //     //all of this is probably stupid and redundant, but it works, I think, so whatever.
+    //     id tempswitchShortSwipeDirections = [preferences valueForKey:@"switchShortSwipeDirections"];
+    //     id tempwrapAroundEnabled = [preferences valueForKey:@"wrapAroundEnabled"];
+    //     id templongSwipesEnabled = [preferences valueForKey:@"longSwipesEnabled"];
+    //     id tempenableAnimations = [preferences valueForKey:@"enableAnimations"];
+    //     id templongSwipeDistance = [preferences valueForKey:@"longSwipeDistance"];
+    //     id tempshortSwipeDistance = [preferences valueForKey:@"shortSwipeDistance"];
+    //     id temphideBackButton = [preferences valueForKey:@"hideBackButton"];
+    //     id tempupdateFrequently = [preferences valueForKey:@"updateFrequently"];
+    //     if (tempswitchShortSwipeDirections) {switchShortSwipeDirections = [tempswitchShortSwipeDirections boolValue]; }
+    //     if (tempwrapAroundEnabled) { wrapAroundEnabled = [tempwrapAroundEnabled boolValue]; }
+    //     if (templongSwipesEnabled) { longSwipesEnabled = [templongSwipesEnabled boolValue]; }
+    //     if (tempenableAnimations) { enableAnimations = [tempenableAnimations boolValue]; }
+    //     if (templongSwipeDistance) { longSwipeDistance = [templongSwipeDistance intValue]; }
+    //     if (tempshortSwipeDistance) { shortSwipeDistance = [tempshortSwipeDistance intValue]; }
+    //     if (temphideBackButton) { hideBackButton = [temphideBackButton boolValue]; }
+    //     if (tempupdateFrequently) { updateFrequently = [tempupdateFrequently boolValue]; }
+
+    //     [tempswitchShortSwipeDirections release];
+    //     [tempwrapAroundEnabled release];
+    //     [templongSwipesEnabled release];
+    //     [tempenableAnimations release];
+    //     [templongSwipeDistance release];
+    //     [tempshortSwipeDistance release];
+    //     [temphideBackButton release];
+    //     [tempupdateFrequently release];
+
+    // }
+
+    // //[prefPath release];
+    // [preferences release];
+    // [tempglobalEnable release];
+    // [tempcustomSwipeSettings release];
 
     %orig;
+
+}
+
+- (void)_messageReceived:(id)arg1
+{
+
+
+
+    %orig;
+    if (updateFrequently) {
+        convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
+        currentConvoIndex = [convos indexOfObject:[self conversation]];
+    }
 
 }
 %end
@@ -411,8 +486,22 @@ static MSSwipeDelegate *swipeDelegate;
 %hook CKMessagesController
 -(void)_conversationLeft:(id)left
 {
-
+    //if you delete a convo
     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
+    //init prefs again
+    preferences = [[NSDictionary alloc] initWithContentsOfFile:PrefPath];
+    globalEnable = [[preferences valueForKey:@"globalEnable"] boolValue];
+    customSwipeSettings = [[preferences valueForKey:@"customSwipeSettings"] boolValue];
+    if (customSwipeSettings) {
+        switchShortSwipeDirections = [[preferences valueForKey:@"switchShortSwipeDirections"] boolValue];
+        wrapAroundEnabled = [[preferences valueForKey:@"wrapAroundEnabled"] boolValue];
+        enableAnimations = [[preferences valueForKey:@"enableAnimations"] boolValue];
+        longSwipesEnabled = [[preferences valueForKey:@"longSwipesEnabled"] boolValue];
+        hideBackButton = [[preferences valueForKey:@"hideBackButton"] boolValue];
+        updateFrequently = [[preferences valueForKey:@"updateFrequently"] boolValue];
+        longSwipeDistance = [[preferences valueForKey:@"longSwipeDistance"] intValue];
+        shortSwipeDistance = [[preferences valueForKey:@"shortSwipeDistance"] intValue];
+    }
 
     %orig;
 }
@@ -453,88 +542,103 @@ static MSSwipeDelegate *swipeDelegate;
 {
 
     convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
-    // if (ckMessagesController) {
-    //     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Test"
-    //         message:[NSString stringWithFormat:@"%@", @"Test"]
-    //         delegate:nil
-    //         cancelButtonTitle:@"K"
-    //         otherButtonTitles:nil];
-    //     [alert show];
-    //     [alert release];
-
-    // }
 
     ckMessagesController = self;
 
     return %orig;
 }
 
-// -(void)_showTranscriptController:(BOOL)controller
-// {
-//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"_showTranscriptController"
-//         message:[NSString stringWithFormat:@"%@", @"Test"]
-//         delegate:nil
-//         cancelButtonTitle:@"K"
-//         otherButtonTitles:nil];
-//     [alert show];
-//     [alert release];
+%end
 
-//     %orig;
-// }
-// -(void)_showTranscriptController:(BOOL)controller animated:(BOOL)animated
-// {
-//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Test"
-//         message:[NSString stringWithFormat:@"%@", @"animated"]
-//         delegate:nil
-//         cancelButtonTitle:@"K"
-//         otherButtonTitles:nil];
-//     [alert show];
-//     [alert release];
+%hook CKConversation
 
-//     %orig;
-// }
+- (void)sendMessage:(id)arg1 newComposition:(BOOL)arg2
+{
+    if (updateFrequently) {
+        convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
+        currentConvoIndex = [convos indexOfObject:self];
+    }
+    %orig;
+}
+- (void)sendMessage:(id)arg1 onService:(id)arg2 newComposition:(BOOL)arg3
+{
+    if (updateFrequently) {
+        convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
+        currentConvoIndex = [convos indexOfObject:self];
+    }
+    %orig;
+
+}
 
 %end
 
 
 %ctor {
+
     //check pref to see if tweak should init if true, %init, else do nothing?
     //pref file path
     //NSString *prefPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Preferences/com.mattcmultimedia.messageswiper.plist"];
-    NSDictionary *preferences = [[NSDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.mattcmultimedia.messageswiper.plist"];
-
-    if (!preferences) { globalEnable = YES; }
-    id tempglobalEnable = [preferences valueForKey:@"globalEnable"];
-    if (tempglobalEnable) { globalEnable = [tempglobalEnable boolValue]; }
-    id tempcustomSwipeSettings = [preferences valueForKey:@"customSwipeSettings"];
-    if (tempcustomSwipeSettings) { customSwipeSettings = [tempcustomSwipeSettings boolValue]; }
+    preferences = [[NSDictionary alloc] initWithContentsOfFile:PrefPath];
+    globalEnable = [[preferences valueForKey:@"globalEnable"] boolValue];
+    customSwipeSettings = [[preferences valueForKey:@"customSwipeSettings"] boolValue];
     if (customSwipeSettings) {
-        //now grab the rest of the values
-        id tempswitchShortSwipeDirections = [preferences valueForKey:@"switchShortSwipeDirections"];
-        id tempwrapAroundEnabled = [preferences valueForKey:@"wrapAroundEnabled"];
-        id templongSwipesEnabled = [preferences valueForKey:@"longSwipesEnabled"];
-        id tempenableAnimations = [preferences valueForKey:@"enableAnimations"];
-        id templongSwipeDistance = [preferences valueForKey:@"longSwipeDistance"];
-        id tempshortSwipeDistance = [preferences valueForKey:@"shortSwipeDistance"];
-        id temphideBackButton = [preferences valueForKey:@"hideBackButton"];
-        id tempupdateFrequently = [preferences valueForKey:@"updateFrequently"];
-        if (tempswitchShortSwipeDirections) {switchShortSwipeDirections = [tempswitchShortSwipeDirections boolValue]; }
-        if (tempwrapAroundEnabled) { wrapAroundEnabled = [tempwrapAroundEnabled boolValue]; }
-        if (templongSwipesEnabled) { longSwipesEnabled = [templongSwipesEnabled boolValue]; }
-        if (tempenableAnimations) { enableAnimations = [tempenableAnimations boolValue]; }
-        if (templongSwipeDistance) { longSwipeDistance = [templongSwipeDistance intValue]; }
-        if (tempshortSwipeDistance) { shortSwipeDistance = [tempshortSwipeDistance intValue]; }
-        if (temphideBackButton) { hideBackButton = [temphideBackButton boolValue]; }
-        if (tempupdateFrequently) { updateFrequently = [tempupdateFrequently boolValue]; }
-
+        switchShortSwipeDirections = [[preferences valueForKey:@"switchShortSwipeDirections"] boolValue];
+        wrapAroundEnabled = [[preferences valueForKey:@"wrapAroundEnabled"] boolValue];
+        enableAnimations = [[preferences valueForKey:@"enableAnimations"] boolValue];
+        longSwipesEnabled = [[preferences valueForKey:@"longSwipesEnabled"] boolValue];
+        hideBackButton = [[preferences valueForKey:@"hideBackButton"] boolValue];
+        updateFrequently = [[preferences valueForKey:@"updateFrequently"] boolValue];
+        longSwipeDistance = [[preferences valueForKey:@"longSwipeDistance"] intValue];
+        shortSwipeDistance = [[preferences valueForKey:@"shortSwipeDistance"] intValue];
     }
+
+    // if (!preferences) { globalEnable = YES; }
+    // id tempglobalEnable = [preferences valueForKey:@"globalEnable"];
+    // if (tempglobalEnable) { globalEnable = [tempglobalEnable boolValue]; }
+    // id tempcustomSwipeSettings = [preferences valueForKey:@"customSwipeSettings"];
+    // if (tempcustomSwipeSettings) { customSwipeSettings = [tempcustomSwipeSettings boolValue]; }
+    // if (customSwipeSettings) {
+    //     //now grab the rest of the values
+    //     //all of this is probably stupid and redundant, but it works, I think, so whatever.
+    //     id tempswitchShortSwipeDirections = [preferences valueForKey:@"switchShortSwipeDirections"];
+    //     id tempwrapAroundEnabled = [preferences valueForKey:@"wrapAroundEnabled"];
+    //     id templongSwipesEnabled = [preferences valueForKey:@"longSwipesEnabled"];
+    //     id tempenableAnimations = [preferences valueForKey:@"enableAnimations"];
+    //     id templongSwipeDistance = [preferences valueForKey:@"longSwipeDistance"];
+    //     id tempshortSwipeDistance = [preferences valueForKey:@"shortSwipeDistance"];
+    //     id temphideBackButton = [preferences valueForKey:@"hideBackButton"];
+    //     id tempupdateFrequently = [preferences valueForKey:@"updateFrequently"];
+    //     if (tempswitchShortSwipeDirections) {switchShortSwipeDirections = [tempswitchShortSwipeDirections boolValue]; }
+    //     if (tempwrapAroundEnabled) { wrapAroundEnabled = [tempwrapAroundEnabled boolValue]; }
+    //     if (templongSwipesEnabled) { longSwipesEnabled = [templongSwipesEnabled boolValue]; }
+    //     if (tempenableAnimations) { enableAnimations = [tempenableAnimations boolValue]; }
+    //     if (templongSwipeDistance) { longSwipeDistance = [templongSwipeDistance intValue]; }
+    //     if (tempshortSwipeDistance) { shortSwipeDistance = [tempshortSwipeDistance intValue]; }
+    //     if (temphideBackButton) { hideBackButton = [temphideBackButton boolValue]; }
+    //     if (tempupdateFrequently) { updateFrequently = [tempupdateFrequently boolValue]; }
+
+    //     [tempswitchShortSwipeDirections release];
+    //     [tempwrapAroundEnabled release];
+    //     [templongSwipesEnabled release];
+    //     [tempenableAnimations release];
+    //     [templongSwipeDistance release];
+    //     [tempshortSwipeDistance release];
+    //     [temphideBackButton release];
+    //     [tempupdateFrequently release];
+
+    // }
     if (globalEnable) {
         %init;
         //passed globalInit; now record rest of preferences
+        //CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
     }
 
     //[prefPath release];
     [preferences release];
+
+    // [tempglobalEnable release];
+    // [tempcustomSwipeSettings release];
+
     // if(something) %init(HelloWorld); //This makes the hello world group functional based on an if statement, just for code management.
     //make a group for WhatsApp and only init if WhatsApp is running or something
     //after making this,
