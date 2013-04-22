@@ -419,50 +419,6 @@ static MSSwipeDelegate *swipeDelegate;
         [[self navigationItem] setHidesBackButton:YES];
     }
 
-    //convos = [[%c(CKConversationList) sharedConversationList] activeConversations];
-    //update settings
-    // NSDictionary *preferences = [[NSDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.mattcmultimedia.messageswiper.plist"];
-
-    // if (!preferences) { globalEnable = YES; }
-    // id tempglobalEnable = [preferences valueForKey:@"globalEnable"];
-    // if (tempglobalEnable) { globalEnable = [tempglobalEnable boolValue]; }
-    // id tempcustomSwipeSettings = [preferences valueForKey:@"customSwipeSettings"];
-    // if (tempcustomSwipeSettings) { customSwipeSettings = [tempcustomSwipeSettings boolValue]; }
-    // if (customSwipeSettings) {
-    //     //now grab the rest of the values
-    //     //all of this is probably stupid and redundant, but it works, I think, so whatever.
-    //     id tempswitchShortSwipeDirections = [preferences valueForKey:@"switchShortSwipeDirections"];
-    //     id tempwrapAroundEnabled = [preferences valueForKey:@"wrapAroundEnabled"];
-    //     id templongSwipesEnabled = [preferences valueForKey:@"longSwipesEnabled"];
-    //     id tempenableAnimations = [preferences valueForKey:@"enableAnimations"];
-    //     id templongSwipeDistance = [preferences valueForKey:@"longSwipeDistance"];
-    //     id tempshortSwipeDistance = [preferences valueForKey:@"shortSwipeDistance"];
-    //     id temphideBackButton = [preferences valueForKey:@"hideBackButton"];
-    //     id tempupdateFrequently = [preferences valueForKey:@"updateFrequently"];
-    //     if (tempswitchShortSwipeDirections) {switchShortSwipeDirections = [tempswitchShortSwipeDirections boolValue]; }
-    //     if (tempwrapAroundEnabled) { wrapAroundEnabled = [tempwrapAroundEnabled boolValue]; }
-    //     if (templongSwipesEnabled) { longSwipesEnabled = [templongSwipesEnabled boolValue]; }
-    //     if (tempenableAnimations) { enableAnimations = [tempenableAnimations boolValue]; }
-    //     if (templongSwipeDistance) { longSwipeDistance = [templongSwipeDistance intValue]; }
-    //     if (tempshortSwipeDistance) { shortSwipeDistance = [tempshortSwipeDistance intValue]; }
-    //     if (temphideBackButton) { hideBackButton = [temphideBackButton boolValue]; }
-    //     if (tempupdateFrequently) { updateFrequently = [tempupdateFrequently boolValue]; }
-
-    //     [tempswitchShortSwipeDirections release];
-    //     [tempwrapAroundEnabled release];
-    //     [templongSwipesEnabled release];
-    //     [tempenableAnimations release];
-    //     [templongSwipeDistance release];
-    //     [tempshortSwipeDistance release];
-    //     [temphideBackButton release];
-    //     [tempupdateFrequently release];
-
-    // }
-
-    // //[prefPath release];
-    // [preferences release];
-    // [tempglobalEnable release];
-    // [tempcustomSwipeSettings release];
 
     %orig;
 
