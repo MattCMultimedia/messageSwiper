@@ -16,6 +16,7 @@
 #import <WhatsApp/WAChatStorage.h>
 #import <WhatsApp/ChatNavigationController.h>
 #import <WhatsApp/WAScrollView.h>
+#import <WhatsApp/WhatsAppAppDelegate.h>
 
 
 
@@ -342,7 +343,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 //if long swipe right, show list
                 if (switchShortSwipeDirections) {
                     //but if switched, show newest message
-                    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+                    convos = [[%c(CKConversationList) sharedConversationList] conversations];
                     [ckMessagesController showConversation:[convos objectAtIndex:0] animate:YES];
                 } else {
                     [ckMessagesController showConversationList:YES];
@@ -367,7 +368,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 if (switchShortSwipeDirections) {
                     [ckMessagesController showConversationList:YES];
                 } else {
-                    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+                    convos = [[%c(CKConversationList) sharedConversationList] conversations];
                     [ckMessagesController showConversation:[convos objectAtIndex:0] animate:YES];
                 }
                 return;
@@ -440,11 +441,9 @@ static MSSwipeDelegate *swipeDelegate;
 - (void)_messageReceived:(id)arg1
 {
 
-
-
     %orig;
     if (updateFrequently) {
-        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+        convos = [[%c(CKConversationList) sharedConversationList] conversations];
         currentConvoIndex = [convos indexOfObject:[self conversation]];
     }
 
@@ -456,7 +455,7 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)_conversationLeft:(id)left
 {
     //if you delete a convo
-    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+    convos = [[%c(CKConversationList) sharedConversationList] conversations];
 
 
     %orig;
@@ -497,7 +496,7 @@ static MSSwipeDelegate *swipeDelegate;
 -(id)init
 {
 
-    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+    convos = [[%c(CKConversationList) sharedConversationList] conversations];
 
     ckMessagesController = self;
 
@@ -590,7 +589,7 @@ static MSSwipeDelegate *swipeDelegate;
 - (void)sendMessage:(id)arg1 newComposition:(BOOL)arg2
 {
     if (updateFrequently) {
-        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+        convos = [[%c(CKConversationList) sharedConversationList] conversations];
         currentConvoIndex = [convos indexOfObject:self];
     }
     %orig;
@@ -598,7 +597,7 @@ static MSSwipeDelegate *swipeDelegate;
 - (void)sendMessage:(id)arg1 onService:(id)arg2 newComposition:(BOOL)arg3
 {
     if (updateFrequently) {
-        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
+        convos = [[%c(CKConversationList) sharedConversationList] conversations];
         currentConvoIndex = [convos indexOfObject:self];
     }
     %orig;
@@ -611,12 +610,12 @@ static MSSwipeDelegate *swipeDelegate;
 
 %group WhatsAppStuff
 static NSMutableArray *chatSessions;
-static NSMutableDictionary *chatViewControllers;
-static NSMutableArray *WAPconvos;
+//static NSMutableDictionary *chatViewControllers;
+
 static ChatListViewController *clViewController;
 static ChatNavigationController *cNavController;
-static int currentWAPControllerIndex;
-static BOOL whatsAppIsLoading = YES;
+static WhatsAppAppDelegate *whatsAppAppDelegate;
+static int currentChatSessionIndex;
 
 @interface MSWAPSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 -(void)messageSwiperWAP_handlePan:(UIPanGestureRecognizer *)recognizer;
@@ -649,7 +648,7 @@ static BOOL whatsAppIsLoading = YES;
     if (!globalEnable) {
         return;
     }
-    if ((WAPconvos == NULL) || ([WAPconvos count] == 0)) {
+    if ((chatSessions == NULL) || ([chatSessions count] == 0)) {
         return;
     }
 
@@ -672,10 +671,10 @@ static BOOL whatsAppIsLoading = YES;
         rightPreviewView.center = CGPointMake(recognizer.view.frame.size.width+60, leftPreviewView.center.y);
         rightPreviewView.hidden = YES;
 
-        nextConvoIndex = currentConvoIndex - 1;
-        if (currentConvoIndex == 0) {
+        nextConvoIndex = currentChatSessionIndex - 1;
+        if (currentChatSessionIndex == 0) {
             if (wrapAroundEnabled) {
-                nextConvoIndex = [WAPconvos count] - 1 ;
+                nextConvoIndex = [chatSessions count] - 1 ;
             } else {
                 nextConvoIndex = 0;
                 //maybe show bounce animation here
@@ -710,8 +709,8 @@ static BOOL whatsAppIsLoading = YES;
             }
 
             // [leftPreviewView setConversation:[WAPconvos objectAtIndex:nextConvoIndex]];
-            // leftContactNameLabel.text = leftPreviewView.contactName;
-            // leftMostRecentMessageLabel.text = leftPreviewView.mostRecentMessage;
+            leftContactNameLabel.text = [[chatSessions objectAtIndex:nextConvoIndex] partnerName];
+            leftMostRecentMessageLabel.text = [NSString stringWithFormat:@"%d", nextConvoIndex];
             //update message label here
             [recognizer.view bringSubviewToFront:leftPreviewView];
             leftPreviewView.hidden = NO;
@@ -747,12 +746,12 @@ static BOOL whatsAppIsLoading = YES;
         //is an ongoing swipe left
         leftPreviewView.hidden = YES;
         leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
-        nextConvoIndex = currentConvoIndex + 1;
-        if (nextConvoIndex >= [WAPconvos count]) {
+        nextConvoIndex = currentChatSessionIndex + 1;
+        if (nextConvoIndex >= [chatSessions count]) {
             if (wrapAroundEnabled) {
                 nextConvoIndex = 0;
             } else {
-                nextConvoIndex = currentConvoIndex;
+                nextConvoIndex = currentChatSessionIndex;
                 //maybe display bounce animation here
             }
         }
@@ -785,16 +784,16 @@ static BOOL whatsAppIsLoading = YES;
             }
 
             // [rightPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
-            // rightContactNameLabel.text = rightPreviewView.contactName;
-            // rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
+            rightContactNameLabel.text = [[chatSessions objectAtIndex:nextConvoIndex] partnerName];
+            rightMostRecentMessageLabel.text = [NSString stringWithFormat:@"%d", nextConvoIndex];
             [recognizer.view bringSubviewToFront:rightPreviewView];
             rightPreviewView.hidden = NO;
 
             if ((-1*translation.x > longSwipeDistance) && longSwipesEnabled) {
                 //set to first convo
-                [rightPreviewView setConversation:[convos objectAtIndex:0]];
-                rightContactNameLabel.text = rightPreviewView.contactName;
-                rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
+                //[rightPreviewView setConversation:[WAPconvos objectAtIndex:0]];
+                rightContactNameLabel.text = @"0";
+                //rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
             }
 
             //actually animate ImageView here
@@ -842,13 +841,18 @@ static BOOL whatsAppIsLoading = YES;
                 if (switchShortSwipeDirections) {
                     //but if switched, show newest message
                     //update conversation list in case of new message
-                    [WAPconvos removeAllObjects];
-                    chatViewControllers = [clViewController chatViewControllers];
-                    for (id key in chatViewControllers) {
-                        [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-                    }
+                    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+                    chatSessions = [storage chatSessions];
+
                     [cNavController popViewControllerAnimated:NO];
-                    [cNavController pushViewController:[WAPconvos objectAtIndex:0] animated:NO];
+                    //change this line to work!
+                    //push first chat
+                    NSIndexPath *nextConvoIndexPath = [NSIndexPath indexPathForRow:0 inSection:1];
+                    UITableView *table = [clViewController tableViewChats];
+                    [clViewController tableView:table willSelectRowAtIndexPath:nextConvoIndexPath];
+                    [clViewController tableView:table didSelectRowAtIndexPath:nextConvoIndexPath];
+
+                    //[cNavController pushViewController:[WAPconvos objectAtIndex:0] animated:NO];
                 } else {
                     [cNavController popViewControllerAnimated:YES];
                 }
@@ -858,7 +862,13 @@ static BOOL whatsAppIsLoading = YES;
             if (translation.x >= shortSwipeDistance) {
                 //this is short swipe: show next convo
                 [cNavController popViewControllerAnimated:NO];
-                [cNavController pushViewController:[WAPconvos objectAtIndex:nextConvoIndex] animated:YES];
+
+
+                NSIndexPath *nextConvoIndexPath = [NSIndexPath indexPathForRow:nextConvoIndex inSection:1];
+                UITableView *table = [clViewController tableViewChats];
+                [clViewController tableView:table willSelectRowAtIndexPath:nextConvoIndexPath];
+                [clViewController tableView:table didSelectRowAtIndexPath:nextConvoIndexPath];
+                //[cNavController pushViewController:[WAPconvos objectAtIndex:nextConvoIndex] animated:YES];
                 return;
             }
 
@@ -873,13 +883,16 @@ static BOOL whatsAppIsLoading = YES;
                 if (switchShortSwipeDirections) {
                     [cNavController popViewControllerAnimated:YES];
                 } else {
-                    [WAPconvos removeAllObjects];
-                    chatViewControllers = [clViewController chatViewControllers];
-                    for (id key in chatViewControllers) {
-                        [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-                    }
+                     WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+                     chatSessions = [storage chatSessions];
+
                     [cNavController popViewControllerAnimated:NO];
-                    [cNavController pushViewController:[WAPconvos objectAtIndex:0] animated:NO];
+                    //change this line!
+                    NSIndexPath *nextConvoIndexPath = [NSIndexPath indexPathForRow:0 inSection:1];
+                    UITableView *table = [clViewController tableViewChats];
+                    [clViewController tableView:table willSelectRowAtIndexPath:nextConvoIndexPath];
+                    [clViewController tableView:table didSelectRowAtIndexPath:nextConvoIndexPath];
+                    //[cNavController pushViewController:[WAPconvos objectAtIndex:0] animated:NO];
                 }
                 return;
             }
@@ -887,10 +900,24 @@ static BOOL whatsAppIsLoading = YES;
             if (translation.x >= shortSwipeDistance) {
                 //this is short swipe: show next convo
                 [cNavController popViewControllerAnimated:NO];
-                [cNavController pushViewController:[WAPconvos objectAtIndex:nextConvoIndex] animated:YES];
+                //this one too!!
+                NSIndexPath *nextConvoIndexPath = [NSIndexPath indexPathForRow:nextConvoIndex inSection:1];
+                UITableView *table = [clViewController tableViewChats];
+                [clViewController tableView:table willSelectRowAtIndexPath:nextConvoIndexPath];
+                [clViewController tableView:table didSelectRowAtIndexPath:nextConvoIndexPath];
+                //[cNavController pushViewController:[WAPconvos objectAtIndex:nextConvoIndex] animated:YES];
                 return;
             }
         }
+
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"chatSessions"
+            message:[NSString stringWithFormat:@"%@ \n %d", chatSessions, currentChatSessionIndex]
+            delegate:nil
+            cancelButtonTitle:@"K"
+            otherButtonTitles:nil];
+        [alert show];
+        [alert release];
+
 
     }
 }
@@ -918,44 +945,55 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
 - (void)viewDidLoad
 {
     %orig;
-    whatsAppIsLoading = YES;
     clViewController = self;
 
-    UITableView *table = [self tableViewChats];
-    //NSInteger numberOfSections = [table numberOfSections];
-    NSMutableArray *tableArray = [[NSMutableArray alloc] init];
-    //start at 1 to ignore first section, which is just buttons.
-    for (int i = 1; i < [table numberOfSections]; ++i)
-    {
-        //for each section, grab number of rows
-        [tableArray addObject:[NSNumber numberWithInt:[table numberOfRowsInSection:i]]];
-        for (int j = 0; j < [table numberOfRowsInSection:i]; ++j)
-        {
-            //now for each row, call did select and then pop the view controller?
-            //- (void)tableView:(id)fp8 didSelectRowAtIndexPath:(id)fp12;
-            NSIndexPath *tempIndexPath = [NSIndexPath indexPathForRow:j inSection:i];
-            [self tableView:table didSelectRowAtIndexPath:tempIndexPath];
-            [cNavController popViewControllerAnimated:NO];
+    // UITableView *table = [self tableViewChats];
+    // //NSInteger numberOfSections = [table numberOfSections];
+    // //NSMutableArray *tableArray = [[NSMutableArray alloc] init];
+    // NSMutableArray *JIDArray = [[NSMutableArray alloc] init];
+    // //start at 1 to ignore first section, which is just buttons.
+    // for (int i = 1; i < [table numberOfSections]; ++i)
+    // {
+    //     //for each section, grab number of rows
+    //     //[tableArray addObject:[NSNumber numberWithInt:[table numberOfRowsInSection:i]]];
+    //     for (int j = 0; j < [table numberOfRowsInSection:i]; ++j)
+    //     {
+    //         //now for each row, call did select and then pop the view controller?
+    //         //- (void)tableView:(id)fp8 didSelectRowAtIndexPath:(id)fp12;
+    //         NSIndexPath *tempIndexPath = [NSIndexPath indexPathForRow:j inSection:i];
+    //         [self tableView:table didSelectRowAtIndexPath:tempIndexPath];
+    //         [JIDArray addObject:[self selectedChatJID]];
+    //         [cNavController popViewControllerAnimated:NO];
 
-        }
-    }
+    //     }
+    // }
     //now create array of viewControllers (convos) from chatViewControllers dict
-    WAPconvos = [[NSMutableArray alloc] init];
-    [WAPconvos removeAllObjects];
-    chatViewControllers = [clViewController chatViewControllers];
-    for (id key in chatViewControllers) {
-        [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-    }
-    //[chatViewControllers release];
-    whatsAppIsLoading = NO;
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"tableArray"
-        message:[NSString stringWithFormat:@"%@", WAPconvos]
-        delegate:nil
-        cancelButtonTitle:@"K"
-        otherButtonTitles:nil];
-    [alert show];
-    [alert release];
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
 
+}
+
+- (void)tableView:(id)fp8 didSelectRowAtIndexPath:(id)fp12
+{
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"didSelectRowAtIndexPath"
+    //     message:[NSString stringWithFormat:@"%@", fp12]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+    %orig;
+}
+- (id)tableView:(id)fp8 willSelectRowAtIndexPath:(id)fp12
+{
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"willSelectRowAtIndexPath"
+    //     message:[NSString stringWithFormat:@"%@", fp12]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+    return %orig;
 }
 
 
@@ -968,40 +1006,23 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
 - (void)chatStorageDidDeleteChatSessions:(id)fp8
 {
     %orig;
-    [WAPconvos removeAllObjects];
-    chatViewControllers = [clViewController chatViewControllers];
-    for (id key in chatViewControllers) {
-        [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-    }
+    //grab the chatSessions for use later
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
+
 }
-
-// - (void)startChatThread
-// {
-
-//     %orig;
-//     WAChatStorage *storage = [self storage];
-//     chatSessions = [storage chatSessions];
-//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"storage"
-//         message:[NSString stringWithFormat:@"%@", chatSessions]
-//         delegate:nil
-//         cancelButtonTitle:@"K"
-//         otherButtonTitles:nil];
-//     [alert show];
-//     [alert release];
-
-// }
 
 
 - (void)chatStorage:(id)fp8 didAddMessages:(id)fp12
 {
     //called on send and receive?
     //update update list of conversations
-    [WAPconvos removeAllObjects];
-    chatViewControllers = [clViewController chatViewControllers];
-    for (id key in chatViewControllers) {
-        [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-    }
     %orig;
+    //grab the chatSessions for use later
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
+
+
 }
 
 // - (BOOL)isDelegateRegistered:(id)fp8
@@ -1016,27 +1037,22 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
 //     [alert release];
 // }
 
-// - (void)unregisterDelegate:(id)fp8
-// {
-//     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"unregisterDelegate"
-//         message:[NSString stringWithFormat:@"%@", fp8]
-//         delegate:nil
-//         cancelButtonTitle:@"K"
-//         otherButtonTitles:nil];
-//     [alert show];
-//     [alert release];
-//     %orig;
-// }
+- (void)unregisterDelegate:(id)fp8
+{
+    //grab the chatSessions for use later - possibly remove
+    %orig;
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
+
+
+}
 - (void)registerDelegate:(id)fp8
 {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"registerDelegate"
-        message:[NSString stringWithFormat:@"%@", fp8]
-        delegate:nil
-        cancelButtonTitle:@"K"
-        otherButtonTitles:nil];
-    [alert show];
-    [alert release];
+    //grab the chatSessions for use later
     %orig;
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
+
 }
 
 %end
@@ -1069,6 +1085,9 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
     panRecognizer.maximumNumberOfTouches = 1;
     [scrollViewChat addGestureRecognizer:panRecognizer];
 
+    //test create invisible view to display previews on
+
+
     %orig;
 
 }
@@ -1082,24 +1101,15 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
 - (void)pushViewController:(UIViewController *)controller animated:(BOOL)animated
 {
 
-    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"push"
-    //     message:[NSString stringWithFormat:@"%@", controller]
-    //     delegate:nil
-    //     cancelButtonTitle:@"K"
-    //     otherButtonTitles:nil];
-    // [alert show];
-    // [alert release];
-    if (!whatsAppIsLoading) {
-        //update chatViewControllers
-        chatViewControllers = [clViewController chatViewControllers];
-        [WAPconvos removeAllObjects];
-        for (id key in chatViewControllers) {
-            [WAPconvos addObject:[chatViewControllers objectForKey:key]];
-        }
-        //get new current one based on push
-        currentWAPControllerIndex = [WAPconvos indexOfObject:controller];
-        %orig;
-    }
+
+
+    //update chatViewControllers
+    WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
+    chatSessions = [storage chatSessions];
+    //get new current one based on push
+    currentChatSessionIndex = [chatSessions indexOfObject:(WAChatSession *)[controller valueForKey:@"_chatSession"]];
+    %orig;
+
 }
 
 // - (void)popViewControllerAnimated:(BOOL)animated
@@ -1127,11 +1137,28 @@ static MSWAPSwipeDelegate *swipeDelegateWAP;
     //grab the chatSessions for use later
     WAChatStorage *storage = [[%c(ChatManager) sharedManager] storage];
     chatSessions = [storage chatSessions];
+    // UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"storage"
+    //     message:[NSString stringWithFormat:@"%@", chatSessions]
+    //     delegate:nil
+    //     cancelButtonTitle:@"K"
+    //     otherButtonTitles:nil];
+    // [alert show];
+    // [alert release];
+
     // ConversationViewController *testController = [[%c(ConversationViewController) alloc] initWithChatSession:[chatSessions objectAtIndex:0]];
     // [[%c(ChatManager) sharedManager] registerDelegate:testController];
     //-(void)pushViewController:(id)controller transition:(int)transition;
     //[cNavController pushViewController:testController transition:0];
 
+}
+
+%end
+
+%hook WhatsAppAppDelegate
+
+- (id)init {
+    whatsAppAppDelegate = self;
+    return %orig;
 }
 
 %end

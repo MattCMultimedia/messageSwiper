@@ -9,8 +9,8 @@
     <dict>
         <key>cell</key>
         <string>PSLinkCell</string>
-              <key>icon</key>
-        <string>MessageSwiperIcon.png</string>
+        <key>icon</key>
+        <string>MessageSwiperIcon@2x.png</string>
         <key>label</key>
         <string>MessageSwiper</string>
     </dict>
