@@ -342,7 +342,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 //if long swipe right, show list
                 if (switchShortSwipeDirections) {
                     //but if switched, show newest message
-                    convos = [[%c(CKConversationList) sharedConversationList] conversations];
+                    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
                     [ckMessagesController showConversation:[convos objectAtIndex:0] animate:YES];
                 } else {
                     [ckMessagesController showConversationList:YES];
@@ -367,7 +367,7 @@ static MSNextMessagePreviewView *rightPreviewView = [[MSNextMessagePreviewView a
                 if (switchShortSwipeDirections) {
                     [ckMessagesController showConversationList:YES];
                 } else {
-                    convos = [[%c(CKConversationList) sharedConversationList] conversations];
+                    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
                     [ckMessagesController showConversation:[convos objectAtIndex:0] animate:YES];
                 }
                 return;
@@ -444,7 +444,7 @@ static MSSwipeDelegate *swipeDelegate;
 
     %orig;
     if (updateFrequently) {
-        convos = [[%c(CKConversationList) sharedConversationList] conversations];
+        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
         currentConvoIndex = [convos indexOfObject:[self conversation]];
     }
 
@@ -456,7 +456,7 @@ static MSSwipeDelegate *swipeDelegate;
 -(void)_conversationLeft:(id)left
 {
     //if you delete a convo
-    convos = [[%c(CKConversationList) sharedConversationList] conversations];
+    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
 
 
     %orig;
@@ -497,7 +497,7 @@ static MSSwipeDelegate *swipeDelegate;
 -(id)init
 {
 
-    convos = [[%c(CKConversationList) sharedConversationList] conversations];
+    convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
 
     ckMessagesController = self;
 
@@ -590,7 +590,7 @@ static MSSwipeDelegate *swipeDelegate;
 - (void)sendMessage:(id)arg1 newComposition:(BOOL)arg2
 {
     if (updateFrequently) {
-        convos = [[%c(CKConversationList) sharedConversationList] conversations];
+        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
         currentConvoIndex = [convos indexOfObject:self];
     }
     %orig;
@@ -598,7 +598,7 @@ static MSSwipeDelegate *swipeDelegate;
 - (void)sendMessage:(id)arg1 onService:(id)arg2 newComposition:(BOOL)arg3
 {
     if (updateFrequently) {
-        convos = [[%c(CKConversationList) sharedConversationList] conversations];
+        convos = (NSMutableArray *)[[%c(CKConversationList) sharedConversationList] valueForKey:@"_trackedConversations"];
         currentConvoIndex = [convos indexOfObject:self];
     }
     %orig;
