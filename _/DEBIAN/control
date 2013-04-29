@@ -1,10 +1,10 @@
 Package: com.mattcmultimedia.messageswiper
 Name: MessageSwiper
-Depends: mobilesubstrate, firmware (>= 6.0)
-Version: 3.0.1-29
+Depends: mobilesubstrate, firmware (>= 6.0), preferenceloader
+Version: 3.0.3-155
 Architecture: iphoneos-arm
 Description: swipe left/right between threads +more
 Maintainer: MattCMultimedia
 Author: MattCMultimedia
 Section: Tweaks
-Installed-Size: 64
+Installed-Size: 60

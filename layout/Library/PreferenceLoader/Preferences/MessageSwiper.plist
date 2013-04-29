@@ -57,7 +57,7 @@
         <key>key</key>
         <string>customSwipeSettings</string>
         <key>label</key>
-        <string>Custom Swipe Settings?</string>
+        <string>Custom Swipe Settings</string>
 
     </dict>
 
@@ -78,7 +78,7 @@
         <key>key</key>
         <string>switchShortSwipeDirections</string>
         <key>label</key>
-        <string>Flip Swipe Directions?</string>
+        <string>Flip Swipe Directions</string>
     </dict>
 
     <!-- wrap around -->
@@ -92,7 +92,7 @@
         <key>key</key>
         <string>wrapAroundEnabled</string>
         <key>label</key>
-        <string>Enable Wrap Around?</string>
+        <string>Enable Wrap Around</string>
     </dict>
 
     <!-- enable long swipes -->
@@ -106,7 +106,7 @@
         <key>key</key>
         <string>longSwipesEnabled</string>
         <key>label</key>
-        <string>Enable Long Swipes?</string>
+        <string>Enable Long Swipes</string>
     </dict>
 
     <!-- enable animations -->
@@ -121,7 +121,7 @@
         <key>key</key>
         <string>enableAnimations</string>
         <key>label</key>
-        <string>Enable Previews?</string>
+        <string>Enable Previews</string>
     </dict>
     <!-- show/hide back button -->
     <dict>
@@ -134,7 +134,7 @@
         <key>key</key>
         <string>hideBackButton</string>
         <key>label</key>
-        <string>Hide Back Button?</string>
+        <string>Hide Back Button</string>
     </dict>
 
     <!-- update dict all the time or just on viewdidappear -->
@@ -148,7 +148,7 @@
         <key>key</key>
         <string>updateFrequently</string>
         <key>label</key>
-        <string>Update On Send?</string>
+        <string>Update On Send</string>
     </dict>
 
     <!-- custom swipe distance group -->
@@ -204,7 +204,7 @@
         <key>defaults</key>
         <string>com.mattcmultimedia.messageswiper</string>
         <key>min</key>
-        <real>200</real>
+        <real>175</real>
         <key>max</key>
         <real>300</real>
         <key>showValue</key>
@@ -224,7 +224,7 @@
         <key>footerText</key>
         <string>MattCMultimedia, AKA Shrugs
 If you'd like to donate towards this tweak, I would certainly appreciate it!
-Paypal/Email:
+Paypal:
 MattCMultimedia@gmail.com
 
 Thanks to Michael P. for beta testing!</string>
@@ -233,7 +233,7 @@ Thanks to Michael P. for beta testing!</string>
         <key>cell</key>
         <string>PSTitleValueCell</string>
         <key>label</key>
-        <string>Message Swiper v3.0.1</string>
+        <string>Message Swiper v3.0.3</string>
     </dict>
 
     <dict>
@@ -264,10 +264,11 @@ Enables and disables the preview bubble that shows the next message as you swipe
 Default:On
 
 Hide Back Button:
-Shows/Hides the "messages" button at the top left of the screen when viewing a conversation. Only works if Enable Long Swipes is also ON. This is purely aesthetics. -Default:Off
+Shows/Hides the "messages" button at the top left of the screen when viewing a conversation. Only works if Enable Long Swipes is also ON. This is purely for aesthetics.
+Default:Off
 
 Update On Send:
-If On, this updates the list of conversations whenever you send a message. Which means after you send a message, you will be magically transported to the top of the list.
+If On, this updates the list of conversations whenever you send a message. Which means after you send a message, you will be magically transported to the top of the list. If off, the list of conversations you swipe through will stay constant until you return to the conversation list.
 Default:Off
 
 Short Swipe Distance:
