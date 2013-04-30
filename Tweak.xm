@@ -660,22 +660,23 @@ static UILabel *WAPrightMostRecentMessageLabel;
 
 @end
 
-static MSWAPNextMessagePreviewView *WAPleftPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
-static MSWAPNextMessagePreviewView *WAPrightPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(backPlacard.frame.size.width+60,10,120,160)];
+static MSWAPNextMessagePreviewView *WAPleftPreviewView; //= [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
+static MSWAPNextMessagePreviewView *WAPrightPreviewView;//= [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(backPlacard.frame.size.width+60,10,120,160)];
 
 @interface MSWAPSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 -(void)messageSwiperWAP_handlePan:(UIPanGestureRecognizer *)recognizer;
--(void)createPreviewImages;
+-(void)createPreviewImages:(UIView *)bgview;
 @end
 @implementation MSWAPSwipeDelegate
 
--(void)createPreviewImages {
+-(void)createPreviewImages:(UIView *)bgview {
     NSBundle *bundle = [[NSBundle alloc] initWithPath:@"/Library/Application Support/MessageSwiper/"];
     NSString *imagePath = [bundle pathForResource:[NSString stringWithFormat:@"/previewImage%@", getsuffix()] ofType:@"png"];
     previewImage = [UIImage imageWithContentsOfFile:imagePath];
     UIImageOrientation flippedOrientation = UIImageOrientationUpMirrored;
     flippedPreviewImage = [UIImage imageWithCGImage:previewImage.CGImage scale:previewImage.scale orientation:flippedOrientation];
-
+    WAPleftPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
+    WAPrightPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(bgview.frame.size.width+60,10,120,160)];
     WAPleftPreviewView.image = previewImage;
     WAPrightPreviewView.image = flippedPreviewImage;
 
@@ -732,7 +733,7 @@ static MSWAPNextMessagePreviewView *WAPrightPreviewView = [[MSWAPNextMessagePrev
             if (![WAPleftPreviewView isDescendantOfView:recognizer.view]) {
                 //if not added to view, go ahead and grab the image and add it to the view
                 if (previewImage == NULL) {
-                    [self createPreviewImages];
+                    [self createPreviewImages:recognizer.view];
                 }
                 [recognizer.view addSubview:WAPleftPreviewView];
 
@@ -807,7 +808,7 @@ static MSWAPNextMessagePreviewView *WAPrightPreviewView = [[MSWAPNextMessagePrev
             //previewImage.imageOrientation = UIImageOrientationUpMirrored;
             if (![WAPrightPreviewView isDescendantOfView:recognizer.view]) {
                 if (flippedPreviewImage == NULL) {
-                    [self createPreviewImages];
+                    [self createPreviewImages:recognizer.view];
                 }
 
                 [recognizer.view addSubview:WAPrightPreviewView];
@@ -962,7 +963,7 @@ static MSWAPNextMessagePreviewView *WAPrightPreviewView = [[MSWAPNextMessagePrev
         }
 
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"chatSessions"
-            message:[NSString stringWithFormat:@"%@ \n %d", [[chatSessions objectAtIndex:0] lastMessage], currentChatSessionIndex]
+            message:[NSString stringWithFormat:@"%@ \n %d", [recognizer.view superview], currentChatSessionIndex]
             delegate:nil
             cancelButtonTitle:@"K"
             otherButtonTitles:nil];
