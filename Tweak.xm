@@ -611,11 +611,57 @@ static MSSwipeDelegate *swipeDelegate;
 %group WhatsAppStuff
 static NSMutableArray *chatSessions;
 //static NSMutableDictionary *chatViewControllers;
-
 static ChatListViewController *clViewController;
 static ChatNavigationController *cNavController;
 static WhatsAppAppDelegate *whatsAppAppDelegate;
 static int currentChatSessionIndex;
+
+static UILabel *WAPleftContactNameLabel;
+static UILabel *WAPrightContactNameLabel;
+static UILabel *WAPleftMostRecentMessageLabel;
+static UILabel *WAPrightMostRecentMessageLabel;
+
+//animation UIView interfaces and stuff
+@interface MSWAPNextMessagePreviewView : UIImageView
+@property (assign) NSString *contactName;
+@property (assign) NSString *mostRecentMessage;
+
+- (void) setChatSession:(WAChatSession *)chatSession;
+
+@end
+@implementation MSWAPNextMessagePreviewView
+@synthesize contactName = _contactName;
+@synthesize mostRecentMessage = _mostRecentMessage;
+
+- (void) setChatSession:(WAChatSession *)chatSession
+{
+    self.contactName = [chatSession partnerName];
+    //would set mostRecentMessage here
+    self.mostRecentMessage = [[chatSession lastMessage] text]; //returns CKIMMessage => NSString
+
+
+}
+
+
+- (void)baseInit {
+    _contactName = NULL;
+    _contactName = @"Unknown - Error";
+    _mostRecentMessage = @"Error Retrieving Message.";
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self baseInit];
+    }
+    return self;
+}
+
+@end
+
+static MSWAPNextMessagePreviewView *WAPleftPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(-60,10,120,160)];
+static MSWAPNextMessagePreviewView *WAPrightPreviewView = [[MSWAPNextMessagePreviewView alloc] initWithFrame:CGRectMake(backPlacard.frame.size.width+60,10,120,160)];
 
 @interface MSWAPSwipeDelegate : NSObject <UIGestureRecognizerDelegate>
 -(void)messageSwiperWAP_handlePan:(UIPanGestureRecognizer *)recognizer;
@@ -630,8 +676,8 @@ static int currentChatSessionIndex;
     UIImageOrientation flippedOrientation = UIImageOrientationUpMirrored;
     flippedPreviewImage = [UIImage imageWithCGImage:previewImage.CGImage scale:previewImage.scale orientation:flippedOrientation];
 
-    leftPreviewView.image = previewImage;
-    rightPreviewView.image = flippedPreviewImage;
+    WAPleftPreviewView.image = previewImage;
+    WAPrightPreviewView.image = flippedPreviewImage;
 
     [bundle release];
     [imagePath release];
@@ -668,8 +714,8 @@ static int currentChatSessionIndex;
     }
     if (translation.x > 0) {
         //is an ongoing swipe to the right
-        rightPreviewView.center = CGPointMake(recognizer.view.frame.size.width+60, leftPreviewView.center.y);
-        rightPreviewView.hidden = YES;
+        WAPrightPreviewView.center = CGPointMake(recognizer.view.frame.size.width+60, WAPleftPreviewView.center.y);
+        WAPrightPreviewView.hidden = YES;
 
         nextConvoIndex = currentChatSessionIndex - 1;
         if (currentChatSessionIndex == 0) {
@@ -683,40 +729,40 @@ static int currentChatSessionIndex;
         if (enableAnimations) {
             //show animations here
 
-            if (![leftPreviewView isDescendantOfView:recognizer.view]) {
+            if (![WAPleftPreviewView isDescendantOfView:recognizer.view]) {
                 //if not added to view, go ahead and grab the image and add it to the view
                 if (previewImage == NULL) {
                     [self createPreviewImages];
                 }
-                [recognizer.view addSubview:leftPreviewView];
+                [recognizer.view addSubview:WAPleftPreviewView];
 
-                leftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(9, 15, 75, 50)];
-                [leftContactNameLabel setTextColor:[UIColor blackColor]];
-                [leftContactNameLabel setBackgroundColor:[UIColor clearColor]];
-                [leftContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
-                [leftContactNameLabel setNumberOfLines:4];
-                [leftContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
-                [leftPreviewView addSubview:leftContactNameLabel];
+                WAPleftContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(9, 15, 75, 50)];
+                [WAPleftContactNameLabel setTextColor:[UIColor blackColor]];
+                [WAPleftContactNameLabel setBackgroundColor:[UIColor clearColor]];
+                [WAPleftContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [WAPleftContactNameLabel setNumberOfLines:4];
+                [WAPleftContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
+                [WAPleftPreviewView addSubview:WAPleftContactNameLabel];
 
                 //add message label here
-                leftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(9,69,75, 79)];
-                [leftMostRecentMessageLabel setTextColor:[UIColor blackColor]];
-                [leftMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
-                [leftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
-                [leftMostRecentMessageLabel setNumberOfLines:10];
-                [leftMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
-                [leftPreviewView addSubview:leftMostRecentMessageLabel];
+                WAPleftMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(9,69,75, 79)];
+                [WAPleftMostRecentMessageLabel setTextColor:[UIColor blackColor]];
+                [WAPleftMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
+                [WAPleftMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
+                [WAPleftMostRecentMessageLabel setNumberOfLines:10];
+                [WAPleftMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
+                [WAPleftPreviewView addSubview:WAPleftMostRecentMessageLabel];
             }
 
-            // [leftPreviewView setConversation:[WAPconvos objectAtIndex:nextConvoIndex]];
-            leftContactNameLabel.text = [[chatSessions objectAtIndex:nextConvoIndex] partnerName];
-            leftMostRecentMessageLabel.text = [NSString stringWithFormat:@"%d", nextConvoIndex];
+            [WAPleftPreviewView setChatSession:[chatSessions objectAtIndex:nextConvoIndex]];
+            WAPleftContactNameLabel.text = WAPleftPreviewView.contactName;
+            WAPleftMostRecentMessageLabel.text = WAPleftPreviewView.mostRecentMessage;
             //update message label here
-            [recognizer.view bringSubviewToFront:leftPreviewView];
-            leftPreviewView.hidden = NO;
+            [recognizer.view bringSubviewToFront:WAPleftPreviewView];
+            WAPleftPreviewView.hidden = NO;
             if ((translation.x > longSwipeDistance) && longSwipesEnabled) {
-                leftContactNameLabel.text = @"Convo List";
-                leftMostRecentMessageLabel.text = @"Release to Return to List.";
+                WAPleftContactNameLabel.text = @"Convo List";
+                WAPleftMostRecentMessageLabel.text = @"Release to Return to List.";
             }
 
             //actual animations
@@ -729,23 +775,23 @@ static int currentChatSessionIndex;
             }
             //float slideFactor = 0.1 * slideMult; // Increase for more of a slide
             CGPoint finalPoint = CGPointMake(-60 + (translation.x * scalar),
-                                             leftPreviewView.center.y);
+                                             WAPleftPreviewView.center.y);
             finalPoint.x = MIN(finalPoint.x, 60);
             //finalPoint.y = MIN(MAX(finalPoint.y, 0), recognizer.view.bounds.size.height);
             if (translation.x > shortSwipeDistance+8) {
-                leftPreviewView.alpha = 1.0f;
+                WAPleftPreviewView.alpha = 1.0f;
             } else {
-                leftPreviewView.alpha = 0.75f;
+                WAPleftPreviewView.alpha = 0.75f;
             }
 
-            leftPreviewView.center = finalPoint;
+            WAPleftPreviewView.center = finalPoint;
 
         }
 
     } else {
         //is an ongoing swipe left
-        leftPreviewView.hidden = YES;
-        leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
+        WAPleftPreviewView.hidden = YES;
+        WAPleftPreviewView.center = CGPointMake(-60, WAPleftPreviewView.center.y);
         nextConvoIndex = currentChatSessionIndex + 1;
         if (nextConvoIndex >= [chatSessions count]) {
             if (wrapAroundEnabled) {
@@ -759,41 +805,41 @@ static int currentChatSessionIndex;
             //show animations here
 
             //previewImage.imageOrientation = UIImageOrientationUpMirrored;
-            if (![rightPreviewView isDescendantOfView:recognizer.view]) {
+            if (![WAPrightPreviewView isDescendantOfView:recognizer.view]) {
                 if (flippedPreviewImage == NULL) {
                     [self createPreviewImages];
                 }
 
-                [recognizer.view addSubview:rightPreviewView];
+                [recognizer.view addSubview:WAPrightPreviewView];
 
-                rightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(39, 15, 75, 50)];
-                [rightContactNameLabel setTextColor:[UIColor blackColor]];
-                [rightContactNameLabel setBackgroundColor:[UIColor clearColor]];
-                [rightContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
-                [rightContactNameLabel setNumberOfLines:4];
-                [rightContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
-                [rightPreviewView addSubview:rightContactNameLabel];
+                WAPrightContactNameLabel = [[UILabel alloc] initWithFrame:CGRectMake(39, 15, 75, 50)];
+                [WAPrightContactNameLabel setTextColor:[UIColor blackColor]];
+                [WAPrightContactNameLabel setBackgroundColor:[UIColor clearColor]];
+                [WAPrightContactNameLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 14.0f]];
+                [WAPrightContactNameLabel setNumberOfLines:4];
+                [WAPrightContactNameLabel setLineBreakMode:NSLineBreakByWordWrapping];
+                [WAPrightPreviewView addSubview:WAPrightContactNameLabel];
 
-                rightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(39,69,75, 79)];
-                [rightMostRecentMessageLabel setTextColor:[UIColor blackColor]];
-                [rightMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
-                [rightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
-                [rightMostRecentMessageLabel setNumberOfLines:10];
-                [rightMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
-                [rightPreviewView addSubview:rightMostRecentMessageLabel];
+                WAPrightMostRecentMessageLabel = [[UILabel alloc] initWithFrame:CGRectMake(39,69,75, 79)];
+                [WAPrightMostRecentMessageLabel setTextColor:[UIColor blackColor]];
+                [WAPrightMostRecentMessageLabel setBackgroundColor:[UIColor clearColor]];
+                [WAPrightMostRecentMessageLabel setFont:[UIFont fontWithName: @"Trebuchet MS" size: 12.0f]];
+                [WAPrightMostRecentMessageLabel setNumberOfLines:10];
+                [WAPrightMostRecentMessageLabel setLineBreakMode:NSLineBreakByWordWrapping];
+                [WAPrightPreviewView addSubview:WAPrightMostRecentMessageLabel];
             }
 
-            // [rightPreviewView setConversation:[convos objectAtIndex:nextConvoIndex]];
-            rightContactNameLabel.text = [[chatSessions objectAtIndex:nextConvoIndex] partnerName];
-            rightMostRecentMessageLabel.text = [NSString stringWithFormat:@"%d", nextConvoIndex];
-            [recognizer.view bringSubviewToFront:rightPreviewView];
-            rightPreviewView.hidden = NO;
+            [WAPrightPreviewView setChatSession:[chatSessions objectAtIndex:nextConvoIndex]];
+            WAPrightContactNameLabel.text = WAPrightPreviewView.contactName;
+            WAPrightMostRecentMessageLabel.text = WAPrightPreviewView.mostRecentMessage;
+            [recognizer.view bringSubviewToFront:WAPrightPreviewView];
+            WAPrightPreviewView.hidden = NO;
 
             if ((-1*translation.x > longSwipeDistance) && longSwipesEnabled) {
                 //set to first convo
-                //[rightPreviewView setConversation:[WAPconvos objectAtIndex:0]];
-                rightContactNameLabel.text = @"0";
-                //rightMostRecentMessageLabel.text = rightPreviewView.mostRecentMessage;
+                [WAPrightPreviewView setChatSession:[chatSessions objectAtIndex:0]];
+                WAPrightContactNameLabel.text = @"0";
+                WAPrightMostRecentMessageLabel.text = WAPrightPreviewView.mostRecentMessage;
             }
 
             //actually animate ImageView here
@@ -803,16 +849,16 @@ static int currentChatSessionIndex;
             } else {
                 scalar = (120/shortSwipeDistance);
             }
-            CGPoint finalPoint = CGPointMake(recognizer.view.frame.size.width+60 + (translation.x * scalar), leftPreviewView.center.y);
+            CGPoint finalPoint = CGPointMake(recognizer.view.frame.size.width+60 + (translation.x * scalar), WAPleftPreviewView.center.y);
             finalPoint.x = MAX(finalPoint.x, recognizer.view.frame.size.width - 60);
             //finalPoint.y = MIN(MAX(finalPoint.y, 0), recognizer.view.bounds.size.height);
             if (-1*translation.x > (shortSwipeDistance+8)) {
-                rightPreviewView.alpha = 1.0f;
+                WAPrightPreviewView.alpha = 1.0f;
             } else {
-                rightPreviewView.alpha = 0.75f;
+                WAPrightPreviewView.alpha = 0.75f;
             }
 
-            rightPreviewView.center = finalPoint;
+            WAPrightPreviewView.center = finalPoint;
         }
 
     }
@@ -822,12 +868,17 @@ static int currentChatSessionIndex;
 
     if (recognizer.state == UIGestureRecognizerStateEnded) {
 
+        WAPrightContactNameLabel.text = @"";
+        WAPrightMostRecentMessageLabel.text = @"";
+        WAPleftContactNameLabel.text = @"";
+        WAPleftMostRecentMessageLabel.text = @"";
+
         // [cNavController popViewControllerAnimated:NO];
         // [cNavController pushViewController:[WAPconvos objectAtIndex:0] animated:NO];
-        leftPreviewView.hidden = YES;
-        rightPreviewView.hidden = YES;
-        leftPreviewView.center = CGPointMake(-60, leftPreviewView.center.y);
-        rightPreviewView.center = CGPointMake(recognizer.view.frame.size.width+60, rightPreviewView.center.y);
+        WAPleftPreviewView.hidden = YES;
+        WAPrightPreviewView.hidden = YES;
+        WAPleftPreviewView.center = CGPointMake(-60, WAPleftPreviewView.center.y);
+        WAPrightPreviewView.center = CGPointMake(recognizer.view.frame.size.width+60, WAPrightPreviewView.center.y);
 
 
 
@@ -911,7 +962,7 @@ static int currentChatSessionIndex;
         }
 
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"chatSessions"
-            message:[NSString stringWithFormat:@"%@ \n %d", chatSessions, currentChatSessionIndex]
+            message:[NSString stringWithFormat:@"%@ \n %d", [[chatSessions objectAtIndex:0] lastMessage], currentChatSessionIndex]
             delegate:nil
             cancelButtonTitle:@"K"
             otherButtonTitles:nil];
